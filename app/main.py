@@ -1,7 +1,7 @@
 import sys
 
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QMainWindow
+from ui.main_window import MacropadGrid
 
 
 class MainWindow(QMainWindow):
@@ -10,16 +10,14 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Macropad Controller")
 
-        label = QLabel("Macropad controller app (skeleton)")
-        label.setAlignment(Qt.AlignCenter)
-
-        self.setCentralWidget(label)
+        self.grid = MacropadGrid()
+        self.setCentralWidget(self.grid)
 
 def main():
     app = QApplication(sys.argv)
 
     window = MainWindow()
-    window.resize(600, 400)
+    window.resize(500, 600)
     window.show()
 
     sys.exit(app.exec())
