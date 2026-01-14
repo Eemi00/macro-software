@@ -35,10 +35,14 @@ class SerialManager:
                 line = self.ser.readline().decode().strip()
                 if line:
                     print("[SerialManager] RAW:", line)
-                if line.startswith("KEY:"):
-                    index = int(line.split(":")[1])
+
+                # Accept both "KEY:x" and "BTN:x"
+                if line.startswith("KEY:") or line.startswith("BTN:"):
+                    _, value = line.split(":", 1)
+                    index = int(value)
                     print("[SerialManager] Parsed key index:", index)
                     self.callback(index)
+
             except Exception as e:
                 print("[SerialManager] read_loop error:", e)
                 time.sleep(0.1)

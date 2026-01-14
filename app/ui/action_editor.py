@@ -5,10 +5,12 @@ from PySide6.QtWidgets import (
 
 
 class ActionEditor(QDialog):
-    def __init__(self, key_index):
+    def __init__(self, key_index, preset_manager):
         super().__init__()
 
         self.key_index = key_index
+        self.preset_manager = preset_manager
+
         self.setWindowTitle(f"Edit Key {key_index + 1}")
 
         self.layout = QVBoxLayout()
@@ -70,21 +72,27 @@ class ActionEditor(QDialog):
             self.cmd_input = QLineEdit()
             self.fields_layout.addRow("Command:", self.cmd_input)
 
-        # "None" has no fields
-
     def save_action(self):
-        action = self.action_type.currentText()
+        action_type = self.action_type.currentText()
 
-        if action == "None":
-            print(f"Key {self.key_index + 1} set to: None")
+        # Build action dictionary
+        action_data = {"type": action_type}
 
-        elif action == "Open Application":
-            print(f"Key {self.key_index + 1} will open app: {self.path_input.text()}")
+        if action_type == "Open Application":
+            action_data["path"] = self.path_input.text()
 
-        elif action == "Open Website":
-            print(f"Key {self.key_index + 1} will open website: {self.url_input.text()}")
+        elif action_type == "Open Website":
+            action_data["url"] = self.url_input.text()
 
-        elif action == "Run Command":
-            print(f"Key {self.key_index + 1} will run command: {self.cmd_input.text()}")
+        elif action_type == "Run Command":
+            action_data["command"] = self.cmd_input.text()
+
+        # Save into preset data
+        self.preset_manager.current_preset_data["keys"][self.key_index] = action_data
+
+        # Write to disk
+        self.preset_manager.save_preset()
+
+        print(f"Saved action for key {self.key_index + 1}: {action_data}")
 
         self.close()

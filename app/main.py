@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 from PySide6.QtWidgets import QApplication, QMainWindow
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer, Signal
 
 from ui.main_window import MacropadGrid
 from core.preset_manager import PresetManager
@@ -10,8 +10,12 @@ from core.action_executor import ActionExecutor
 
 
 class MainWindow(QMainWindow):
+    show_ui_signal = Signal()
+
     def __init__(self):
         super().__init__()
+
+        self.show_ui_signal.connect(self.show_interface)
 
         print("[MainWindow] init")
 
@@ -44,9 +48,10 @@ class MainWindow(QMainWindow):
 
     def show_interface(self):
         print("[MainWindow] show_interface called")
-        self.show()
-        self.setWindowState(self.windowState() & ~Qt.WindowMinimized | Qt.WindowActive)
-        self.raise_()
+
+        self.setWindowState(Qt.WindowNoState) 
+        self.show() 
+        self.raise_() 
         self.activateWindow()
 
     def load_stylesheet(self):
@@ -68,7 +73,7 @@ class MainWindow(QMainWindow):
 
             if bottom_index == 0:
                 print("[MainWindow] Function key: Open App")
-                self.show_interface()
+                self.show_ui_signal.emit()
                 return
 
             print("[MainWindow] Other function key pressed (not implemented)")
