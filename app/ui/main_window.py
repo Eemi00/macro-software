@@ -18,12 +18,24 @@ class MacropadGrid(QWidget):
                     # Bottom row (fixed keys)
                     labels = ["Open App", "Overlay", "Prev Preset", "Next Preset"]
                     btn.setText(labels[col])
-                    btn.styleSheet("background-color: #444; color: white;")
+                    btn.setProperty("class", "fixed-key")
+
+                    # Connect fixed keys
+                    btn.clicked.connect(lambda _, c=col: self.handle_fixed_key(c))
                 else:
                     # Customizable keys
                     btn.setText(f"Key {index + 1}")
-                    btn.setStyleSheet("background-color: #222; color: white;")
+
+                    # Connect customizable keys
+                    btn.clicked.connect(lambda _, i=index: self.handle_custom_key(i))
 
                 btn.setFixedSize(100, 100)
                 self.layout.addWidget(btn, row, col)
                 self.buttons.append(btn)
+
+    def handle_custom_key(self, index):
+        print(f"Custom key pressed: {index + 1}")
+
+    def handle_fixed_key(self, col):
+        actions = ["Open App", "Overlay", "Prev Preset", "Next Preset"]
+        print(f"Fixed key pressed: {actions[col]}")
