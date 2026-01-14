@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QWidget, QPushButton, QGridLayout
+from ui.action_editor import ActionEditor
 
 class MacropadGrid(QWidget):
     def __init__(self):
@@ -34,7 +35,8 @@ class MacropadGrid(QWidget):
                 self.buttons.append(btn)
 
     def handle_custom_key(self, index):
-        print(f"Custom key pressed: {index + 1}")
+        editor = ActionEditor(index)
+        editor.exec()
 
     def handle_fixed_key(self, col):
         actions = ["Open App", "Overlay", "Prev Preset", "Next Preset"]
