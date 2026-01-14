@@ -54,6 +54,11 @@ class MainWindow(QMainWindow):
         self.raise_() 
         self.activateWindow()
 
+    def closeEvent(self, event):
+        event.ignore()          # Prevent the window from closing
+        self.hide()             # Hide the window instead
+        print("[MainWindow] Window hidden instead of closed")
+
     def load_stylesheet(self):
         css_path = Path(__file__).parent / "styles" / "main.css"
         if css_path.exists():
