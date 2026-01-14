@@ -3,34 +3,27 @@ from pathlib import Path
 
 
 class PresetManager:
-    def __init__(self, presets_folder):
-        base = Path(__file__).parent.parent  # app/core → app/
-        self.presets_folder = base / presets_folder
+    def __init__(self, folder):
+        self.folder = Path(folder)
+        self.folder.mkdir(exist_ok=True)
 
         self.current_preset = None
         self.current_preset_data = None
 
     def load_preset(self, name):
-        path = self.presets_folder / f"{name}.json"
-
-        print("[PresetManager] Loading preset from:", path)
+        path = self.folder / f"{name}.json"
 
         if not path.exists():
-            raise FileNotFoundError(f"Preset '{name}' not found at {path}")
+            raise FileNotFoundError(f"Preset not found: {path}")
 
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             self.current_preset_data = json.load(f)
 
         self.current_preset = name
-        print("[PresetManager] Loaded preset:", self.current_preset)
         return self.current_preset_data
 
-    def save_preset(self):
-        if not self.current_preset:
-            return
+    def save_preset(self, name):
+        path = self.folder / f"{name}.json"
 
-        path = self.presets_folder / f"{self.current_preset}.json"
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(self.current_preset_data, f, indent=4)
-
-        print("[PresetManager] Saved preset to:", path)

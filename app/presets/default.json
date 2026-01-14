@@ -1,53 +1,53 @@
 {
-    "name": "Default",
+    "name": "default",
     "keys": [
         {
-            "type": "Open Website",
-            "url": "https://eemille.fi"
+            "type": "open_website",
+            "value": "https://eemille.fi"
         },
         {
-            "type": "Open Website",
-            "url": "https://eemille.fi"
+            "type": "open_website",
+            "value": "https://eemille.fi"
         },
         {
-            "type": "Open Website",
-            "url": "https://eemille.fi"
+            "type": "open_website",
+            "value": "https://arvolle.fi"
         },
         {
-            "type": "Open Website",
-            "url": "https://eemille.fi"
+            "type": "none",
+            "value": ""
         },
         {
-            "type": "Open Website",
-            "url": "https://eemille.fi"
+            "type": "none",
+            "value": ""
         },
         {
-            "type": "Open Website",
-            "url": "https://eemille.fi"
+            "type": "none",
+            "value": ""
         },
         {
-            "type": "Open Website",
-            "url": "https://eemille.fi"
+            "type": "none",
+            "value": ""
         },
         {
-            "type": "Open Website",
-            "url": "https://eemille.fi"
+            "type": "none",
+            "value": ""
         },
         {
-            "type": "Open Website",
-            "url": "https://eemille.fi"
+            "type": "none",
+            "value": ""
         },
         {
-            "type": "Open Website",
-            "url": "https://eemille.fi"
+            "type": "none",
+            "value": ""
         },
         {
-            "type": "Open Website",
-            "url": "https://eemille.fi"
+            "type": "none",
+            "value": ""
         },
         {
-            "type": "Open Website",
-            "url": "https://eemille.fi"
+            "type": "none",
+            "value": ""
         }
     ]
 }
