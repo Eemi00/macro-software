@@ -4,6 +4,8 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QSystemTrayIcon, QMenu
 from PySide6.QtCore import Qt, Signal, QTimer, QEvent
 from PySide6.QtGui import QIcon, QAction
 
+UI_ONLY = True
+
 from ui.main_window import MainView
 from core.preset_manager import PresetManager
 from core.serial_manager import SerialManager
@@ -15,6 +17,8 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+
+        self.test_mode = False
 
         self.setFixedSize(1000, 800)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
@@ -35,15 +39,19 @@ class MainWindow(QMainWindow):
 
         self.load_stylesheet()
 
-        self.serial = SerialManager(
-            port="COM6",
-            callback=self.handle_key_press
-        )
-        self.serial.start()
+        if not UI_ONLY:
+            self.serial = SerialManager(
+                port="COM6",
+                callback=self.handle_key_press
+            )
+            self.serial.start()
+        else:
+            self.serial = None
+            print("[UI MODE] SerialManager disabled")
 
         self.setup_tray_icon()
 
-        self.hide()
+        self.show()
 
     def setup_tray_icon(self):
         self.tray = QSystemTrayIcon(self)
@@ -68,7 +76,8 @@ class MainWindow(QMainWindow):
             self.show_interface()
 
     def quit_app(self):
-        self.serial.running = False
+        if self.serial:
+            self.serial.running = False
         QApplication.quit()
 
     def show_interface(self):
@@ -113,7 +122,10 @@ class MainWindow(QMainWindow):
             return
 
         action = keys[key_index]
-        self.executor.execute(action)
+        if not UI_ONLY:
+            self.executor.execute(action)
+        else:
+            print("[UI MODE] Would execute:", action)
 
 
 def main():

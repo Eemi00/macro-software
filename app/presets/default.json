@@ -14,8 +14,8 @@
             "value": "https://arvolle.fi"
         },
         {
-            "type": "none",
-            "value": ""
+            "type": "type_text",
+            "value": "hello world"
         },
         {
             "type": "none",

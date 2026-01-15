@@ -31,13 +31,18 @@ class MacropadGrid(QWidget):
                 else:
                     btn.setText(f"Key {index + 1}")
                     btn.setProperty("class", "macro-key")
-                    btn.clicked.connect(lambda _, i=index: self.edit_key(i))
+                    btn.clicked.connect(lambda _, i=index: self.handle_click(i))
 
                 layout.addWidget(btn, row, col)
 
-    def edit_key(self, index):
-        editor = ActionEditor(index, self.preset_manager)
-        editor.exec()
+    def handle_click(self, index):
+        if self.main_window.test_mode:
+            action = self.preset_manager.current_preset_data["keys"][index]
+            print("[TEST MODE] Executing:", action)
+            self.main_window.executor.execute(action, force=True)
+        else:
+            editor = ActionEditor(index, self.preset_manager)
+            editor.exec()
 
 
 class MainView(QWidget):
@@ -159,9 +164,21 @@ class MainView(QWidget):
         title_row.addStretch(1)
         layout.addLayout(title_row)
 
-        subtitle = QLabel("Click a key to configure its action.")
+        subtitle = QLabel("Click a key to configure or test its action.")
         subtitle.setObjectName("pageSubtitle")
         layout.addWidget(subtitle)
+
+        # ⭐ Test Mode Toggle
+        test_btn = QPushButton("Enable Test Mode")
+        test_btn.setCheckable(True)
+
+        def toggle_test():
+            self.main_window.test_mode = test_btn.isChecked()
+            test_btn.setText("Disable Test Mode" if test_btn.isChecked() else "Enable Test Mode")
+            print("[TEST MODE] =", self.main_window.test_mode)
+
+        test_btn.clicked.connect(toggle_test)
+        layout.addWidget(test_btn)
 
         layout.addSpacing(16)
 
