@@ -130,17 +130,17 @@ QScrollBar::handle:vertical {
 /* MACRO KEYS - The "Pixel" Aesthetic */
 QPushButton[class="macro-key"] {
     background-color: #111111;
-    border: 1px solid #333333;
-    border-radius: 4px; /* Sharp corners like a pixel */
+    border: 1px solid #222222;
+    border-radius: 6px; /* Sharp corners like a pixel */
     color: #888888;
     font-size: 13px;
-    font-weight: 600;
+    padding: 5px;
 }
  
 QPushButton[class="macro-key"]:hover {
-    background-color: #1a1a1a;
+    background-color: #161616;
     border: 1px solid #10b981; /* Neon border */
-    color: #10b981;
+    color: #ffffff;
 }
  
 QPushButton[class="macro-key"]:pressed {
@@ -170,6 +170,7 @@ QPushButton {
     border-radius: 6px;
     padding: 8px 16px;
     color: #fff;
+    text-transform: none;
 }
 QPushButton:hover {
     border-color: #666;
@@ -197,4 +198,15 @@ QListWidget::item:selected {
     background: #111;
     border-left: 3px solid #10b981;
     color: #fff;
+}
+
+QDialog QLabel {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    /* CHANGE THIS: */
+    text-transform: none; /* Was 'uppercase' */
+    letter-spacing: 0.5px;
+    border: none;
+    margin-top: 5px;
 }

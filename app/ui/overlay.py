@@ -109,10 +109,16 @@ class OverlayWindow(QWidget):
             if i < 12:
                 if i < len(keys):
                     action = keys[i]
-                    # Use custom label if it exists, otherwise fallback to type
-                    display_text = action.get("label") or action.get("type", "none")
-                    v = action.get("value", "")
-                    label.setText(f"{i+1:02d}\n{display_text}\n{v}")
+                    # Use the custom label if set, otherwise capitalize the type
+                    display_name = action.get("label") or action.get("type", "none").replace("_", " ").upper()
+                    
+                    # Clean multi-line format without extra symbols
+                    label.setText(f"{i+1}\n{display_name}")
+                else:
+                    label.setText(f"{i+1}\nEMPTY")
+            else:
+                names = ["APP", "LAYER", "PREV", "NEXT"]
+                label.setText(names[i - 12])
 
     def show_on_primary_bottom_left(self):
         """Show overlay at bottom-left of the primary monitor."""

@@ -32,7 +32,7 @@ class ActionExecutor:
 
         if action_type == "run_command":
             if value:
-                subprocess.Popen(value, shell=True)
+                subprocess.Popen(f'start cmd /k "{value}"', shell=True)
             return
 
         if action_type == "key_combo":
