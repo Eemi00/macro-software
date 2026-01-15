@@ -1,5 +1,3 @@
-# ui/main_window.py
-
 from PySide6.QtWidgets import (
     QWidget, QPushButton, QGridLayout, QVBoxLayout, QHBoxLayout,
     QLabel, QListWidget, QListWidgetItem, QStackedWidget, QFrame,
@@ -103,30 +101,31 @@ class MainView(QWidget):
         layout.addWidget(subtitle)
         layout.addSpacing(20)
 
-        btn_dashboard = QPushButton("DASHBOARD")
-        btn_keys = QPushButton("KEY CONFIG")
-        btn_presets = QPushButton("PRESETS")
+        # FIX 1: Make these buttons instance variables so we can access them later
+        self.btn_dashboard = QPushButton("DASHBOARD")
+        self.btn_keys = QPushButton("KEY CONFIG")
+        self.btn_presets = QPushButton("PRESETS")
 
-        for b in (btn_dashboard, btn_keys, btn_presets):
+        for b in (self.btn_dashboard, self.btn_keys, self.btn_presets):
             b.setObjectName("navButton")
             b.setCheckable(True)
             b.setCursor(Qt.PointingHandCursor)
 
         def set_page(widget, button):
             self.pages.setCurrentWidget(widget)
-            for b in (btn_dashboard, btn_keys, btn_presets):
+            for b in (self.btn_dashboard, self.btn_keys, self.btn_presets):
                 b.setChecked(False)
             button.setChecked(True)
 
-        btn_dashboard.clicked.connect(lambda: set_page(self.dashboard_page, btn_dashboard))
-        btn_keys.clicked.connect(lambda: set_page(self.keys_page, btn_keys))
-        btn_presets.clicked.connect(lambda: set_page(self.presets_page, btn_presets))
+        self.btn_dashboard.clicked.connect(lambda: set_page(self.dashboard_page, self.btn_dashboard))
+        self.btn_keys.clicked.connect(lambda: set_page(self.keys_page, self.btn_keys))
+        self.btn_presets.clicked.connect(lambda: set_page(self.presets_page, self.btn_presets))
 
-        btn_dashboard.setChecked(True)
+        self.btn_dashboard.setChecked(True)
 
-        layout.addWidget(btn_dashboard)
-        layout.addWidget(btn_keys)
-        layout.addWidget(btn_presets)
+        layout.addWidget(self.btn_dashboard)
+        layout.addWidget(self.btn_keys)
+        layout.addWidget(self.btn_presets)
 
         layout.addStretch(1)
 
@@ -190,6 +189,11 @@ class MainView(QWidget):
         test_btn.setCheckable(True)
         test_btn.setFixedWidth(140)
         test_btn.setCursor(Qt.PointingHandCursor)
+
+        # FIX 2: Check current state when rebuilding the page
+        if self.main_window.test_mode:
+            test_btn.setChecked(True)
+            test_btn.setText("TEST ACTIVE")
 
         def toggle_test():
             enabled = test_btn.isChecked()
@@ -331,6 +335,11 @@ class MainView(QWidget):
         self.pages.insertWidget(2, self.presets_page)
 
         self.pages.setCurrentWidget(self.keys_page)
+        
+        # FIX 1 (Part 2): Update sidebar state visually
+        self.btn_dashboard.setChecked(False)
+        self.btn_presets.setChecked(False)
+        self.btn_keys.setChecked(True)
 
     def build_info_card(self, title, value):
         frame = QFrame()
