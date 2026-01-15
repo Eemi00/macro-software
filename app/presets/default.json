@@ -2,22 +2,6 @@
     "name": "default",
     "keys": [
         {
-            "type": "open_website",
-            "value": "https://eemille.fi"
-        },
-        {
-            "type": "open_website",
-            "value": "https://eemille.fi"
-        },
-        {
-            "type": "open_website",
-            "value": "https://arvolle.fi"
-        },
-        {
-            "type": "type_text",
-            "value": "hello world"
-        },
-        {
             "type": "none",
             "value": ""
         },
@@ -46,8 +30,24 @@
             "value": ""
         },
         {
-            "type": "type_text",
-            "value": "sdfsdfsdfsd"
+            "type": "none",
+            "value": ""
+        },
+        {
+            "type": "none",
+            "value": ""
+        },
+        {
+            "type": "none",
+            "value": ""
+        },
+        {
+            "type": "none",
+            "value": ""
+        },
+        {
+            "type": "none",
+            "value": ""
         }
     ],
     "global_keys": [
