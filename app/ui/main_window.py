@@ -1,3 +1,5 @@
+# ui/main_window.py
+
 from PySide6.QtWidgets import (
     QWidget, QPushButton, QGridLayout, QVBoxLayout, QHBoxLayout,
     QLabel, QListWidget, QListWidgetItem, QStackedWidget, QFrame,
@@ -67,6 +69,10 @@ class MainView(QWidget):
         root.setSpacing(0)
         self.setLayout(root)
 
+        # Labels/Cards we need to track for connection status
+        self.status_label = None
+        self.connection_value_label = None
+
         self.sidebar = self.build_sidebar()
         root.addWidget(self.sidebar)
 
@@ -101,7 +107,7 @@ class MainView(QWidget):
         layout.addWidget(subtitle)
         layout.addSpacing(20)
 
-        # FIX 1: Make these buttons instance variables so we can access them later
+        # Nav Buttons as instance variables to fix the sidebar desync bug
         self.btn_dashboard = QPushButton("DASHBOARD")
         self.btn_keys = QPushButton("KEY CONFIG")
         self.btn_presets = QPushButton("PRESETS")
@@ -129,9 +135,12 @@ class MainView(QWidget):
 
         layout.addStretch(1)
 
-        status_label = QLabel("SYSTEM ONLINE")
-        status_label.setObjectName("statusLabel")
-        layout.addWidget(status_label)
+        # Dynamic connection status label
+        self.status_label = QLabel("SEARCHING...")
+        self.status_label.setObjectName("statusLabel")
+        self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_label.setStyleSheet("color: #777; background: #111; padding: 5px; border-radius: 4px;")
+        layout.addWidget(self.status_label)
 
         return frame
 
@@ -158,11 +167,13 @@ class MainView(QWidget):
         key_count = len(self.preset_manager.current_preset_data.get("keys", []))
         keys_card = self.build_info_card("MAPPED KEYS", f"{key_count}/16")
 
-        status_card = self.build_info_card("CONNECTION", "USB-C")
+        # Connection Card
+        connection_card = self.build_info_card("CONNECTION", "OFFLINE")
+        self.connection_value_label = connection_card.findChild(QLabel, "infoCardValue")
 
         info_row.addWidget(preset_card)
         info_row.addWidget(keys_card)
-        info_row.addWidget(status_card)
+        info_row.addWidget(connection_card)
         layout.addStretch(1)
         return page
 
@@ -190,7 +201,7 @@ class MainView(QWidget):
         test_btn.setFixedWidth(140)
         test_btn.setCursor(Qt.PointingHandCursor)
 
-        # FIX 2: Check current state when rebuilding the page
+        # Fix for Test Mode resetting on page switch
         if self.main_window.test_mode:
             test_btn.setChecked(True)
             test_btn.setText("TEST ACTIVE")
@@ -335,11 +346,28 @@ class MainView(QWidget):
         self.pages.insertWidget(2, self.presets_page)
 
         self.pages.setCurrentWidget(self.keys_page)
-        
-        # FIX 1 (Part 2): Update sidebar state visually
+
+        # Highlight KEY CONFIG in sidebar after switching preset
         self.btn_dashboard.setChecked(False)
         self.btn_presets.setChecked(False)
         self.btn_keys.setChecked(True)
+
+    def update_connection_state(self, connected: bool):
+        """Update the UI based on device connection status."""
+        if connected:
+            if self.status_label:
+                self.status_label.setText("SYSTEM ONLINE")
+                self.status_label.setStyleSheet("color: #059669; background: #0a1a12; padding: 5px; border-radius: 4px;")
+            if self.connection_value_label:
+                self.connection_value_label.setText("ACTIVE")
+                self.connection_value_label.setStyleSheet("color: #10b981;")
+        else:
+            if self.status_label:
+                self.status_label.setText("DISCONNECTED")
+                self.status_label.setStyleSheet("color: #ef4444; background: #2a0a0a; padding: 5px; border-radius: 4px;")
+            if self.connection_value_label:
+                self.connection_value_label.setText("OFFLINE")
+                self.connection_value_label.setStyleSheet("color: #ef4444;")
 
     def build_info_card(self, title, value):
         frame = QFrame()
