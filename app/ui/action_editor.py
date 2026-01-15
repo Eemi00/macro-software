@@ -15,7 +15,6 @@ class ActionEditor(QDialog):
         self.setMinimumWidth(400)
 
         layout = QVBoxLayout(self)
-
         layout.addWidget(QLabel(f"Configure action for Key {key_index + 1}"))
 
         self.type_box = QComboBox()
@@ -36,6 +35,7 @@ class ActionEditor(QDialog):
         save_btn.clicked.connect(self.save)
         cancel_btn.clicked.connect(self.reject)
 
+        # Load current data
         keys = self.preset_manager.current_preset_data.get("keys", [])
         if self.key_index < len(keys):
             current = keys[self.key_index]
@@ -46,18 +46,18 @@ class ActionEditor(QDialog):
         self.input_field.setText(current.get("value", ""))
 
     def save(self):
-        action_type = self.type_box.currentText()
-        value = self.input_field.text()
-
+        # Update the local data dictionary
         keys = self.preset_manager.current_preset_data.get("keys", [])
+        
+        # Ensure the list is long enough
         while len(keys) <= self.key_index:
             keys.append({"type": "none", "value": ""})
-
+            
         keys[self.key_index] = {
-            "type": action_type,
-            "value": value
+            "type": self.type_box.currentText(),
+            "value": self.input_field.text()
         }
-
-        self.preset_manager.current_preset_data["keys"] = keys
-        self.preset_manager.save_preset(self.preset_manager.current_preset)
+        
+        # FIX: Use save_data instead of save_preset
+        self.preset_manager.save_data(self.preset_manager.current_preset, self.preset_manager.current_preset_data)
         self.accept()

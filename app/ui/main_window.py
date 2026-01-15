@@ -1,5 +1,3 @@
-# ui/main_window.py
-
 from PySide6.QtWidgets import (
     QWidget, QPushButton, QGridLayout, QVBoxLayout, QHBoxLayout,
     QLabel, QListWidget, QListWidgetItem, QStackedWidget, QFrame,
@@ -8,384 +6,243 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from ui.action_editor import ActionEditor
 
-
 class MacropadGrid(QWidget):
     def __init__(self, preset_manager, main_window):
         super().__init__()
         self.preset_manager = preset_manager
         self.main_window = main_window
-
-        layout = QGridLayout()
+        layout = QGridLayout(self)
         layout.setSpacing(10)
-        layout.setContentsMargins(16, 16, 16, 16)
-        self.setLayout(layout)
 
-        for row in range(4):
-            for col in range(4):
-                index = row * 4 + col
-                btn = QPushButton()
-                btn.setFixedSize(100, 100)
-                btn.setCursor(Qt.PointingHandCursor)
+        for i in range(16):
+            row, col = divmod(i, 4)
+            btn = QPushButton()
+            btn.setFixedSize(100, 100)
+            btn.setCursor(Qt.PointingHandCursor)
 
-                if row == 3:
-                    labels = ["APP", "LAYER", "PREV", "NEXT"]
-                    btn.setText(labels[col])
-                    btn.setProperty("class", "fixed-key")
+            if row == 3:
+                labels = ["APP", "LAYER", "PREV", "NEXT"]
+                btn.setText(labels[col])
+                btn.setProperty("class", "fixed-key")
+                if col == 0: btn.clicked.connect(self.main_window.show_interface)
+                elif col == 1: btn.clicked.connect(self.main_window.show_overlay)
+                elif col == 2: btn.clicked.connect(self.main_window.prev_preset)
+                elif col == 3: btn.clicked.connect(self.main_window.next_preset)
+            else:
+                btn.setText(f"{i + 1:02d}")
+                btn.setProperty("class", "macro-key")
+                btn.clicked.connect(lambda _, x=i: self.on_click(x))
+            layout.addWidget(btn, row, col)
 
-                    if col == 0:
-                        btn.clicked.connect(self.main_window.show_interface)
-                    elif col == 1:
-                        btn.clicked.connect(self.main_window.show_overlay)
-                    elif col == 2:
-                        btn.clicked.connect(self.main_window.prev_preset)
-                    elif col == 3:
-                        btn.clicked.connect(self.main_window.next_preset)
-                else:
-                    btn.setText(f"{index + 1:02d}")
-                    btn.setProperty("class", "macro-key")
-                    btn.clicked.connect(lambda _, i=index: self.handle_click(i))
-
-                layout.addWidget(btn, row, col)
-
-    def handle_click(self, index):
+    def on_click(self, index):
         if self.main_window.test_mode:
             keys = self.preset_manager.current_preset_data.get("keys", [])
-            if index < len(keys):
-                action = keys[index]
-                self.main_window.executor.execute(action, force=True)
+            if index < len(keys): self.main_window.executor.execute(keys[index], force=True)
         else:
-            editor = ActionEditor(index, self.preset_manager)
-            editor.exec()
-
+            if ActionEditor(index, self.preset_manager).exec():
+                self.main_window.view.reload_all_pages()
 
 class MainView(QWidget):
     def __init__(self, preset_manager, main_window):
         super().__init__()
         self.preset_manager = preset_manager
         self.main_window = main_window
+        
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0,0,0,0)
+        layout.setSpacing(0)
 
-        root = QHBoxLayout()
-        root.setContentsMargins(0, 0, 0, 0)
-        root.setSpacing(0)
-        self.setLayout(root)
+        # Sidebar
+        self.sidebar = QFrame(); self.sidebar.setObjectName("sidebar")
+        side_lyt = QVBoxLayout(self.sidebar)
+        
+        title = QLabel("MACROPAD"); title.setObjectName("sidebarTitle")
+        sub = QLabel("MK.III // GRID"); sub.setObjectName("sidebarSubtitle")
+        side_lyt.addWidget(title); side_lyt.addWidget(sub); side_lyt.addSpacing(20)
 
-        # Labels/Cards we need to track for connection status
-        self.status_label = None
-        self.connection_value_label = None
+        self.nav_btns = []
+        for i, text in enumerate(["DASHBOARD", "KEY CONFIG", "PRESETS"]):
+            btn = QPushButton(text); btn.setObjectName("navButton"); btn.setCheckable(True)
+            btn.clicked.connect(lambda _, idx=i: self.switch_page(idx))
+            side_lyt.addWidget(btn)
+            self.nav_btns.append(btn)
 
-        self.sidebar = self.build_sidebar()
-        root.addWidget(self.sidebar)
+        side_lyt.addStretch()
+        self.status_label = QLabel("OFFLINE"); self.status_label.setObjectName("statusLabel")
+        side_lyt.addWidget(self.status_label)
 
         self.pages = QStackedWidget()
-        root.addWidget(self.pages, 1)
+        layout.addWidget(self.sidebar)
+        layout.addWidget(self.pages, 1)
 
-        self.dashboard_page = self.build_dashboard_page()
-        self.keys_page = self.build_keys_page()
-        self.presets_page = self.build_presets_page()
+        self.reload_all_pages()
 
-        self.pages.addWidget(self.dashboard_page)
-        self.pages.addWidget(self.keys_page)
-        self.pages.addWidget(self.presets_page)
-
-        self.pages.setCurrentWidget(self.dashboard_page)
-
-    def build_sidebar(self):
-        frame = QFrame()
-        frame.setObjectName("sidebar")
-
-        layout = QVBoxLayout()
-        layout.setContentsMargins(20, 40, 20, 40)
-        layout.setSpacing(10)
-        frame.setLayout(layout)
-
-        title = QLabel("MACROPAD")
-        title.setObjectName("sidebarTitle")
-        subtitle = QLabel("MK.III // GRID")
-        subtitle.setObjectName("sidebarSubtitle")
-
-        layout.addWidget(title)
-        layout.addWidget(subtitle)
-        layout.addSpacing(20)
-
-        # Nav Buttons as instance variables to fix the sidebar desync bug
-        self.btn_dashboard = QPushButton("DASHBOARD")
-        self.btn_keys = QPushButton("KEY CONFIG")
-        self.btn_presets = QPushButton("PRESETS")
-
-        for b in (self.btn_dashboard, self.btn_keys, self.btn_presets):
-            b.setObjectName("navButton")
-            b.setCheckable(True)
-            b.setCursor(Qt.PointingHandCursor)
-
-        def set_page(widget, button):
-            self.pages.setCurrentWidget(widget)
-            for b in (self.btn_dashboard, self.btn_keys, self.btn_presets):
-                b.setChecked(False)
-            button.setChecked(True)
-
-        self.btn_dashboard.clicked.connect(lambda: set_page(self.dashboard_page, self.btn_dashboard))
-        self.btn_keys.clicked.connect(lambda: set_page(self.keys_page, self.btn_keys))
-        self.btn_presets.clicked.connect(lambda: set_page(self.presets_page, self.btn_presets))
-
-        self.btn_dashboard.setChecked(True)
-
-        layout.addWidget(self.btn_dashboard)
-        layout.addWidget(self.btn_keys)
-        layout.addWidget(self.btn_presets)
-
-        layout.addStretch(1)
-
-        # Dynamic connection status label
-        self.status_label = QLabel("SEARCHING...")
-        self.status_label.setObjectName("statusLabel")
-        self.status_label.setAlignment(Qt.AlignCenter)
-        self.status_label.setStyleSheet("color: #777; background: #111; padding: 5px; border-radius: 4px;")
-        layout.addWidget(self.status_label)
-
-        return frame
-
-    def build_dashboard_page(self):
-        page = QFrame()
-        page.setObjectName("dashboardPage")
-
-        layout = QVBoxLayout()
-        layout.setContentsMargins(50, 50, 50, 50)
-        layout.setSpacing(30)
-        page.setLayout(layout)
-
-        title = QLabel("Command Center")
-        title.setObjectName("pageTitle")
-        layout.addWidget(title)
-
-        info_row = QHBoxLayout()
-        info_row.setSpacing(20)
-        layout.addLayout(info_row)
-
-        preset_name = self.preset_manager.current_preset or "DEFAULT"
-        preset_card = self.build_info_card("ACTIVE PROFILE", preset_name.upper())
-
-        key_count = len(self.preset_manager.current_preset_data.get("keys", []))
-        keys_card = self.build_info_card("MAPPED KEYS", f"{key_count}/16")
-
-        # Connection Card
-        connection_card = self.build_info_card("CONNECTION", "OFFLINE")
-        self.connection_value_label = connection_card.findChild(QLabel, "infoCardValue")
-
-        info_row.addWidget(preset_card)
-        info_row.addWidget(keys_card)
-        info_row.addWidget(connection_card)
-        layout.addStretch(1)
-        return page
-
-    def build_keys_page(self):
-        page = QFrame()
-        page.setObjectName("keysPage")
-
-        layout = QVBoxLayout()
-        layout.setContentsMargins(50, 40, 50, 40)
-        layout.setSpacing(20)
-        page.setLayout(layout)
-
-        header_layout = QHBoxLayout()
-        title = QLabel("Grid Layout")
-        title.setObjectName("pageTitle")
-        header_layout.addWidget(title)
-        header_layout.addStretch()
-
-        preset_label = QLabel(f"Active Preset: {self.preset_manager.current_preset.upper()}")
-        preset_label.setObjectName("pageSubtitle")
-        layout.addWidget(preset_label)
-
-        test_btn = QPushButton("TEST MODE")
-        test_btn.setCheckable(True)
-        test_btn.setFixedWidth(140)
-        test_btn.setCursor(Qt.PointingHandCursor)
-
-        # Fix for Test Mode resetting on page switch
-        if self.main_window.test_mode:
-            test_btn.setChecked(True)
-            test_btn.setText("TEST ACTIVE")
-
-        def toggle_test():
-            enabled = test_btn.isChecked()
-            self.main_window.test_mode = enabled
-            test_btn.setText("TEST ACTIVE" if enabled else "TEST MODE")
-
-        test_btn.clicked.connect(toggle_test)
-        header_layout.addWidget(test_btn)
-        layout.addLayout(header_layout)
-
-        grid_frame = QFrame()
-        grid_frame.setObjectName("keysGridFrame")
-
-        grid_layout = QVBoxLayout()
-        grid_layout.setContentsMargins(4, 4, 4, 4)
-        grid_frame.setLayout(grid_layout)
-
-        grid = MacropadGrid(self.preset_manager, self.main_window)
-        grid.setObjectName("keysGrid")
-        grid_layout.addWidget(grid, alignment=Qt.AlignCenter)
-
-        layout.addWidget(grid_frame)
-        layout.addStretch(1)
-
-        return page
-
-    def build_presets_page(self):
-        page = QFrame()
-        page.setObjectName("presetsPage")
-
-        layout = QVBoxLayout()
-        layout.setContentsMargins(50, 50, 50, 50)
-        layout.setSpacing(20)
-        page.setLayout(layout)
-
-        title = QLabel("Profiles")
-        title.setObjectName("pageTitle")
-        layout.addWidget(title)
-
-        list_widget = QListWidget()
-        list_widget.setObjectName("presetList")
-
-        presets = self.preset_manager.list_presets()
-        current = self.preset_manager.current_preset or "default"
-
-        for p in presets:
-            item = QListWidgetItem(p)
-            list_widget.addItem(item)
-            if p == current:
-                item.setSelected(True)
-
-        list_widget.itemClicked.connect(self.on_preset_selected)
-        self.preset_list_widget = list_widget
-
-        layout.addWidget(list_widget)
-
-        btn_row = QHBoxLayout()
-        new_btn = QPushButton("New Preset")
-        del_btn = QPushButton("Delete Preset")
-        rename_btn = QPushButton("Rename Preset")
-
-        new_btn.clicked.connect(self.create_preset)
-        del_btn.clicked.connect(self.delete_preset)
-        rename_btn.clicked.connect(self.rename_preset)
-
-        btn_row.addWidget(new_btn)
-        btn_row.addWidget(del_btn)
-        btn_row.addWidget(rename_btn)
-        layout.addLayout(btn_row)
-
-        layout.addStretch(1)
-        return page
-
-    def on_preset_selected(self, item):
-        name = item.text()
-        self.main_window.switch_preset(name)
-
-    def create_preset(self):
-        name, ok = QInputDialog.getText(self, "New Preset", "Preset name:")
-        if not ok or not name.strip():
-            return
-        name = name.strip()
-        if name in self.preset_manager.list_presets():
-            QMessageBox.warning(self, "Preset exists", "A preset with that name already exists.")
-            return
-        self.preset_manager.create_preset(name)
-        self.main_window.switch_preset(name)
-
-    def delete_preset(self):
-        current = self.preset_manager.current_preset
-        if not current:
-            return
-        presets = self.preset_manager.list_presets()
-        if len(presets) <= 1:
-            QMessageBox.warning(self, "Cannot delete", "You must have at least one preset.")
-            return
-        reply = QMessageBox.question(
-            self,
-            "Delete Preset",
-            f"Delete preset '{current}'?",
-            QMessageBox.Yes | QMessageBox.No
-        )
-        if reply != QMessageBox.Yes:
-            return
-        self.preset_manager.delete_preset(current)
-        new_current = self.preset_manager.list_presets()[0]
-        self.main_window.switch_preset(new_current)
-
-    def rename_preset(self):
-        current = self.preset_manager.current_preset
-        if not current:
-            return
-        new_name, ok = QInputDialog.getText(self, "Rename Preset", "New name:", text=current)
-        if not ok or not new_name.strip():
-            return
-        new_name = new_name.strip()
-        if new_name == current:
-            return
-        if new_name in self.preset_manager.list_presets():
-            QMessageBox.warning(self, "Preset exists", "A preset with that name already exists.")
-            return
-        self.preset_manager.rename_preset(current, new_name)
-        self.main_window.switch_preset(new_name)
+    def switch_page(self, index):
+        self.pages.setCurrentIndex(index)
+        for i, btn in enumerate(self.nav_btns):
+            btn.setChecked(i == index)
 
     def reload_all_pages(self):
-        self.pages.removeWidget(self.keys_page)
-        self.keys_page.deleteLater()
-        self.keys_page = self.build_keys_page()
-        self.pages.insertWidget(1, self.keys_page)
+        """Total refresh of all UI components to sync with JSON files."""
+        cur_idx = self.pages.currentIndex() if self.pages.count() > 0 else 0
+        while self.pages.count():
+            w = self.pages.widget(0)
+            self.pages.removeWidget(w)
+            w.deleteLater()
+        
+        self.pages.addWidget(self.build_dashboard())
+        self.pages.addWidget(self.build_keys())
+        self.pages.addWidget(self.build_presets())
+        self.switch_page(cur_idx)
 
-        self.pages.removeWidget(self.dashboard_page)
-        self.dashboard_page.deleteLater()
-        self.dashboard_page = self.build_dashboard_page()
-        self.pages.insertWidget(0, self.dashboard_page)
+    def build_dashboard(self):
+        page = QFrame()
+        lyt = QVBoxLayout(page); lyt.setContentsMargins(50,50,50,50)
+        title = QLabel("Command Center"); title.setObjectName("pageTitle"); lyt.addWidget(title)
+        
+        row = QHBoxLayout()
+        row.addWidget(self.info_card("ACTIVE PROFILE", self.preset_manager.current_preset.upper()))
+        
+        # Mapped Keys Logic
+        mapped_count = self.preset_manager.count_total_mapped_keys()
+        row.addWidget(self.info_card("MAPPED KEYS", str(mapped_count)))
+        
+        self.conn_card = self.info_card("CONNECTION", "OFFLINE")
+        row.addWidget(self.conn_card)
+        
+        lyt.addLayout(row); lyt.addStretch()
+        return page
 
-        self.pages.removeWidget(self.presets_page)
-        self.presets_page.deleteLater()
-        self.presets_page = self.build_presets_page()
-        self.pages.insertWidget(2, self.presets_page)
+    def info_card(self, t, v):
+        f = QFrame(); f.setObjectName("infoCard"); f.setFixedSize(220, 100)
+        l = QVBoxLayout(f); l.addWidget(QLabel(t))
+        val = QLabel(v); val.setObjectName("infoCardValue"); l.addWidget(val)
+        f.value_label = val
+        return f
 
-        self.pages.setCurrentWidget(self.keys_page)
+    def build_keys(self):
+        page = QFrame()
+        lyt = QVBoxLayout(page); lyt.setContentsMargins(50,50,50,50)
+        
+        hdr = QHBoxLayout()
+        v_lyt = QVBoxLayout()
+        title = QLabel("Grid Layout"); title.setObjectName("pageTitle")
+        # CURRENT PRESET LABEL BACK IN CONFIG
+        self.preset_lbl = QLabel(f"Current Preset: {self.preset_manager.current_preset}")
+        self.preset_lbl.setStyleSheet("color: #10b981; font-weight: bold; font-size: 14px;")
+        v_lyt.addWidget(title); v_lyt.addWidget(self.preset_lbl)
+        
+        hdr.addLayout(v_lyt); hdr.addStretch()
+        
+        tbtn = QPushButton("TEST MODE"); tbtn.setCheckable(True)
+        tbtn.setChecked(self.main_window.test_mode)
+        tbtn.clicked.connect(lambda: setattr(self.main_window, 'test_mode', tbtn.isChecked()))
+        hdr.addWidget(tbtn)
+        
+        lyt.addLayout(hdr)
+        lyt.addWidget(MacropadGrid(self.preset_manager, self.main_window), alignment=Qt.AlignCenter)
+        lyt.addStretch()
+        return page
 
-        # Highlight KEY CONFIG in sidebar after switching preset
-        self.btn_dashboard.setChecked(False)
-        self.btn_presets.setChecked(False)
-        self.btn_keys.setChecked(True)
+    def build_presets(self):
+        page = QFrame()
+        lyt = QVBoxLayout(page)
+        lyt.setContentsMargins(50, 50, 50, 50)
+        
+        # Header with Buttons
+        hdr = QHBoxLayout()
+        hdr.addWidget(QLabel("AVAILABLE PROFILES"))
+        hdr.addStretch()
+        
+        btn_add = QPushButton("+ NEW")
+        btn_ren = QPushButton("RENAME")
+        btn_del = QPushButton("DELETE")
+        
+        # Link to the fixed functions
+        btn_add.clicked.connect(self.add_preset)
+        btn_ren.clicked.connect(self.rename_preset)
+        btn_del.clicked.connect(self.delete_preset)
+        
+        hdr.addWidget(btn_add)
+        hdr.addWidget(btn_ren)
+        hdr.addWidget(btn_del)
+        lyt.addLayout(hdr)
 
-    def update_connection_state(self, connected: bool):
-        """Update the UI based on device connection status."""
-        if connected:
-            if self.status_label:
-                self.status_label.setText("SYSTEM ONLINE")
-                self.status_label.setStyleSheet("color: #059669; background: #0a1a12; padding: 5px; border-radius: 4px;")
-            if self.connection_value_label:
-                self.connection_value_label.setText("ACTIVE")
-                self.connection_value_label.setStyleSheet("color: #10b981;")
-        else:
-            if self.status_label:
-                self.status_label.setText("DISCONNECTED")
-                self.status_label.setStyleSheet("color: #ef4444; background: #2a0a0a; padding: 5px; border-radius: 4px;")
-            if self.connection_value_label:
-                self.connection_value_label.setText("OFFLINE")
-                self.connection_value_label.setStyleSheet("color: #ef4444;")
+        # The List
+        self.plist = QListWidget()
+        self.plist.setObjectName("presetList")
+        for p in self.preset_manager.list_presets():
+            item = QListWidgetItem(p)
+            self.plist.addItem(item)
+            if p == self.preset_manager.current_preset:
+                item.setSelected(True)
+        
+        self.plist.itemClicked.connect(self.on_preset_select)
+        lyt.addWidget(self.plist)
+        return page
 
-    def build_info_card(self, title, value):
-        frame = QFrame()
-        frame.setObjectName("infoCard")
-        frame.setFixedSize(200, 100)
+    def on_preset_select(self, item):
+        """Triggered when clicking a preset in the list."""
+        self.main_window.switch_preset(item.text())
+        self.switch_page(1) # Jump to key config automatically
 
-        layout = QVBoxLayout()
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(5)
-        frame.setLayout(layout)
+    def add_preset(self):
+        name, ok = QInputDialog.getText(self, "New Preset", "Enter preset name:")
+        if ok and name:
+            name = name.strip()
+            if name in self.preset_manager.list_presets():
+                QMessageBox.warning(self, "Error", "A preset with that name already exists!")
+                return
+            
+            self.preset_manager.create_preset(name)
+            self.main_window.switch_preset(name) # This reloads everything automatically
+            self.switch_page(1) # Jump to Key Config
 
-        title_label = QLabel(title)
-        title_label.setObjectName("infoCardTitle")
+    def rename_preset(self):
+        # Acts on the CURRENTLY ACTIVE preset
+        old_name = self.preset_manager.current_preset
+        
+        if old_name == "default":
+            QMessageBox.warning(self, "Protected", "The 'default' preset cannot be renamed.")
+            return
 
-        value_label = QLabel(value)
-        value_label.setObjectName("infoCardValue")
+        new_name, ok = QInputDialog.getText(
+            self, "Rename Active Preset", 
+            f"Enter new name for '{old_name}':", 
+            text=old_name
+        )
+        
+        if ok and new_name and new_name.strip() != old_name:
+            new_name = new_name.strip()
+            self.preset_manager.rename_preset(old_name, new_name)
+            self.main_window.switch_preset(new_name)
+            self.switch_page(1)
 
-        layout.addWidget(title_label)
-        layout.addWidget(value_label)
+    def delete_preset(self):
+        # Acts on the CURRENTLY ACTIVE preset
+        target = self.preset_manager.current_preset
+        
+        if target == "default":
+            QMessageBox.warning(self, "Protected", "The 'default' preset cannot be deleted.")
+            return
 
-        return frame
+        # --- CONFIRMATION DIALOG ---
+        confirm = QMessageBox.question(
+            self, "Confirm Deletion",
+            f"Are you sure you want to permanently delete the preset: '{target}'?\n\nThis cannot be undone.",
+            QMessageBox.Yes | QMessageBox.No
+        )
+
+        if confirm == QMessageBox.Yes:
+            self.preset_manager.delete_preset(target)
+            # Always switch back to default after a deletion
+            self.main_window.switch_preset("default")
+            self.switch_page(0) # Go to Dashboard to see updated count
+
+    def update_connection_state(self, connected):
+        status = "ACTIVE" if connected else "OFFLINE"
+        color = "#10b981" if connected else "#ef4444"
+        if hasattr(self, 'status_label'):
+            self.status_label.setText(status); self.status_label.setStyleSheet(f"color: {color};")
+        if hasattr(self, 'conn_card'):
+            self.conn_card.value_label.setText(status); self.conn_card.value_label.setStyleSheet(f"color: {color};")
