@@ -102,7 +102,6 @@ class OverlayWindow(QWidget):
         self.refresh()
 
     def refresh(self):
-        """Refresh overlay contents based on current preset."""
         data = self.preset_manager.current_preset_data or {}
         keys = data.get("keys", [])
 
@@ -110,14 +109,10 @@ class OverlayWindow(QWidget):
             if i < 12:
                 if i < len(keys):
                     action = keys[i]
-                    t = action.get("type", "none")
+                    # Use custom label if it exists, otherwise fallback to type
+                    display_text = action.get("label") or action.get("type", "none")
                     v = action.get("value", "")
-                    label.setText(f"{i+1:02d}\n{t}\n{v}")
-                else:
-                    label.setText(f"{i+1:02d}\nnone")
-            else:
-                names = ["APP", "LAYER", "PREV", "NEXT"]
-                label.setText(names[i - 12])
+                    label.setText(f"{i+1:02d}\n{display_text}\n{v}")
 
     def show_on_primary_bottom_left(self):
         """Show overlay at bottom-left of the primary monitor."""

@@ -34,7 +34,8 @@ class PresetManager:
         return self.current_preset_data
 
     def create_preset(self, name):
-        data = {"name": name, "keys": [{"type": "none", "value": ""}] * 12}
+        # Added "label": "" to the default key structure
+        data = {"name": name, "keys": [{"type": "none", "value": "", "label": ""}] * 12}
         self.save_data(name, data)
 
     def save_data(self, name, data):

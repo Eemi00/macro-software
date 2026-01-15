@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt, Signal, QEvent
 from PySide6.QtGui import QAction, QIcon
 
 # SET TO FALSE WHEN HARDWARE IS CONNECTED
-UI_ONLY = True 
+UI_ONLY = False 
 
 from ui.main_window import MainView
 from core.preset_manager import PresetManager
@@ -30,13 +30,14 @@ class MainWindow(QMainWindow):
         self.base_path = Path(__file__).resolve().parent
         os.chdir(self.base_path)
         icon_path = str(self.base_path / "icon.png")
+        self.app_icon = QIcon(icon_path)
 
         self.test_mode = False
         self.overlay = None
 
         self.setFixedSize(1000, 800)
         self.setWindowTitle("Macropad Controller")
-        self.setWindowIcon(QIcon(icon_path))
+        self.setWindowIcon(self.app_icon)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
 
         # Managers
@@ -67,8 +68,9 @@ class MainWindow(QMainWindow):
         self.setup_tray(icon_path)
 
     def setup_tray(self, icon_path):
-        self.tray = QSystemTrayIcon(self)
+        self.tray = QSystemTrayIcon(self.app_icon, self)
         self.tray.setIcon(QIcon(icon_path))
+        self.tray.setToolTip("Macropad Controller")
         menu = QMenu()
         menu.addAction("Show Grid", self.show_interface)
         menu.addSeparator()
@@ -102,8 +104,25 @@ class MainWindow(QMainWindow):
     def switch_preset(self, name):
         if not name: return
         self.presets.load_preset(name)
+        
+        # --- NEW NOTIFICATION LOGIC ---
+        if self.isHidden() and hasattr(self, 'tray'):
+            self.tray.showMessage(
+                "Preset Switched",
+                f"Active Profile: {name.upper()}",
+                QSystemTrayIcon.Information,
+                500 # Duration in milliseconds
+            )
+        # ------------------------------
+
         if self.overlay: self.overlay.refresh()
         self.view.reload_all_pages()
+        
+        # Fix for the "Offline" bug: update connection state after reloading UI
+        is_connected = False
+        if hasattr(self, 'serial') and self.serial.ser and self.serial.ser.is_open:
+            is_connected = True
+        self.view.update_connection_state(is_connected)
 
     def next_preset(self):
         n = self.presets.get_next_preset()
@@ -117,19 +136,28 @@ class MainWindow(QMainWindow):
         idx = key_index - 1
         if idx >= 12:
             cmd = idx - 12
-            if cmd == 0: self.show_ui_signal.emit()
-            elif cmd == 1: self.show_overlay()
-            elif cmd == 2: self.prev_preset()
-            elif cmd == 3: self.next_preset()
+            if cmd == 0: 
+                self.show_ui_signal.emit()
+            elif cmd == 1: 
+                self.show_overlay()
+            elif cmd == 2: 
+                self.prev_preset()
+            elif cmd == 3: 
+                self.next_preset()
         else:
             keys = self.presets.current_preset_data.get("keys", [])
             if 0 <= idx < len(keys):
+                # Ensure we pass the dictionary to the executor
                 self.executor.execute(keys[idx], force=True)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     
-    # Force correct working directory for assets/presets
+    # --- ADD THESE TWO LINES TO FIX THE "WEIRD NAME" ---
+    app.setApplicationName("Macropad Controller")
+    app.setApplicationDisplayName("Macropad Controller")
+    # --------------------------------------------------
+
     current_dir = Path(__file__).resolve().parent
     import os
     os.chdir(current_dir)
