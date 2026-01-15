@@ -1,23 +1,11 @@
 {
-    "name": "default",
+    "name": "testi",
     "keys": [
-        {
-            "type": "open_website",
-            "value": "https://eemille.fi"
-        },
-        {
-            "type": "open_website",
-            "value": "https://eemille.fi"
-        },
         {
             "type": "open_website",
             "value": "https://arvolle.fi"
         },
         {
-            "type": "type_text",
-            "value": "hello world"
-        },
-        {
             "type": "none",
             "value": ""
         },
@@ -48,23 +36,17 @@
         {
             "type": "none",
             "value": ""
-        }
-    ],
-    "global_keys": [
-        {
-            "type": "open_app",
-            "value": "..."
         },
         {
-            "type": "open_website",
-            "value": "..."
-        },
-        {
-            "type": "prev",
+            "type": "none",
             "value": ""
         },
         {
-            "type": "next",
+            "type": "none",
+            "value": ""
+        },
+        {
+            "type": "none",
             "value": ""
         }
     ]

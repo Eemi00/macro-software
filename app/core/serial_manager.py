@@ -1,7 +1,8 @@
+# core/serial_manager.py
+
 import serial
 import threading
 import time
-
 
 class SerialManager:
     def __init__(self, port, callback, baudrate=115200):
@@ -36,7 +37,6 @@ class SerialManager:
                 if line:
                     print("[SerialManager] RAW:", line)
 
-                # Accept both "KEY:x" and "BTN:x"
                 if line.startswith("KEY:") or line.startswith("BTN:"):
                     _, value = line.split(":", 1)
                     index = int(value)

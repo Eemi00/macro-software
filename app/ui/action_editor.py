@@ -1,9 +1,9 @@
+# ui/action_editor.py
+
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QComboBox, QLineEdit,
     QPushButton, QHBoxLayout
 )
-from PySide6.QtCore import Qt
-
 
 class ActionEditor(QDialog):
     def __init__(self, key_index, preset_manager):
@@ -36,8 +36,12 @@ class ActionEditor(QDialog):
         save_btn.clicked.connect(self.save)
         cancel_btn.clicked.connect(self.reject)
 
-        # Load current values
-        current = preset_manager.current_preset_data["keys"][key_index]
+        keys = self.preset_manager.current_preset_data.get("keys", [])
+        if self.key_index < len(keys):
+            current = keys[self.key_index]
+        else:
+            current = {"type": "none", "value": ""}
+
         self.type_box.setCurrentText(current.get("type", "none"))
         self.input_field.setText(current.get("value", ""))
 
@@ -45,14 +49,15 @@ class ActionEditor(QDialog):
         action_type = self.type_box.currentText()
         value = self.input_field.text()
 
-        # Update in-memory preset
-        self.preset_manager.current_preset_data["keys"][self.key_index] = {
+        keys = self.preset_manager.current_preset_data.get("keys", [])
+        while len(keys) <= self.key_index:
+            keys.append({"type": "none", "value": ""})
+
+        keys[self.key_index] = {
             "type": action_type,
             "value": value
         }
 
-        # Save to disk
+        self.preset_manager.current_preset_data["keys"] = keys
         self.preset_manager.save_preset(self.preset_manager.current_preset)
-
-        # Close dialog
         self.accept()

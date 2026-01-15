@@ -1,3 +1,5 @@
+# main.py
+
 import sys
 from pathlib import Path
 from PySide6.QtWidgets import QApplication, QMainWindow, QSystemTrayIcon, QMenu
@@ -10,6 +12,7 @@ from ui.main_window import MainView
 from core.preset_manager import PresetManager
 from core.serial_manager import SerialManager
 from core.action_executor import ActionExecutor
+from ui.overlay import OverlayWindow
 
 
 class MainWindow(QMainWindow):
@@ -19,6 +22,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.test_mode = False
+        self.overlay = None
 
         self.setFixedSize(1000, 800)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
@@ -29,6 +33,7 @@ class MainWindow(QMainWindow):
 
         base = Path(__file__).resolve().parent
         self.presets = PresetManager(base / "presets")
+        self.presets.ensure_default_preset()
         data = self.presets.load_preset("default")
         print("[MainWindow] Loaded preset:", data.get("name"), "with", len(data.get("keys", [])), "keys")
 
@@ -50,7 +55,6 @@ class MainWindow(QMainWindow):
             print("[UI MODE] SerialManager disabled")
 
         self.setup_tray_icon()
-
         self.show()
 
     def setup_tray_icon(self):
@@ -86,6 +90,18 @@ class MainWindow(QMainWindow):
         self.raise_()
         self.activateWindow()
 
+    def show_overlay(self):
+        # Toggle behavior
+        if self.overlay is not None and self.overlay.isVisible():
+            self.overlay.close()
+            return
+
+        if self.overlay is None:
+            self.overlay = OverlayWindow(self.presets)
+
+        self.overlay.refresh()
+        self.overlay.show_on_primary_bottom_left()
+
     def closeEvent(self, event):
         event.ignore()
         self.hide()
@@ -102,6 +118,23 @@ class MainWindow(QMainWindow):
             with open(css_path, "r") as f:
                 self.setStyleSheet(f.read())
 
+    def switch_preset(self, name: str):
+        if not name:
+            return
+        self.presets.load_preset(name)
+        print("[Preset] Switched to:", name)
+        self.view.reload_all_pages()
+
+    def next_preset(self):
+        name = self.presets.get_next_preset()
+        if name:
+            self.switch_preset(name)
+
+    def prev_preset(self):
+        name = self.presets.get_prev_preset()
+        if name:
+            self.switch_preset(name)
+
     def handle_key_press(self, key_index):
         key_index -= 1
 
@@ -111,7 +144,15 @@ class MainWindow(QMainWindow):
             if bottom_index == 0:
                 self.show_ui_signal.emit()
                 return
-
+            if bottom_index == 1:
+                self.show_overlay()
+                return
+            if bottom_index == 2:
+                self.prev_preset()
+                return
+            if bottom_index == 3:
+                self.next_preset()
+                return
             return
 
         if not self.presets.current_preset_data:

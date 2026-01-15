@@ -1,3 +1,5 @@
+# core/action_executor.py
+
 UI_ONLY = True
 
 class ActionExecutor:
@@ -8,12 +10,10 @@ class ActionExecutor:
         action_type = action.get("type")
         value = action.get("value", "")
 
-        # If UI_ONLY is True but force=False → do NOT execute
         if UI_ONLY and not force:
             print(f"[UI MODE] Would execute: {action_type} -> {value}")
             return
 
-        # Import only what is needed
         import webbrowser
         import subprocess
 
@@ -35,19 +35,20 @@ class ActionExecutor:
                 subprocess.Popen(value, shell=True)
             return
 
-        # Only import keyboard if needed
         if action_type == "key_combo":
             try:
                 import keyboard
-                keyboard.press_and_release(value)
+                if value:
+                    keyboard.press_and_release(value)
             except ModuleNotFoundError:
-                print("[ERROR] 'keyboard' module not installed. Cannot run key_combo.")
+                print("[ERROR] 'keyboard' module not installed.")
             return
 
         if action_type == "type_text":
             try:
                 import keyboard
-                keyboard.write(value)
+                if value:
+                    keyboard.write(value)
             except ModuleNotFoundError:
-                print("[ERROR] 'keyboard' module not installed. Cannot type text.")
+                print("[ERROR] 'keyboard' module not installed.")
             return
