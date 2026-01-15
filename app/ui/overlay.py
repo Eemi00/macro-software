@@ -18,9 +18,7 @@ class OverlayWindow(QWidget):
             Qt.WindowStaysOnTopHint
         )
 
-        # Transparent background behind the frame
         self.setAttribute(Qt.WA_TranslucentBackground, True)
-
         self.build_ui()
 
     def build_ui(self):
@@ -30,71 +28,53 @@ class OverlayWindow(QWidget):
         frame = QFrame()
         frame.setStyleSheet("""
             QFrame {
-                background-color: rgba(5, 5, 5, 220);
-                border: 1px solid #10b981;
+                background-color: rgba(5, 5, 5, 235);
+                border: 2px solid #10b981;
                 border-radius: 12px;
             }
         """)
         outer_layout.addWidget(frame)
 
         main_layout = QVBoxLayout(frame)
-        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setContentsMargins(12, 12, 12, 12)
         main_layout.setSpacing(10)
 
-        # --- TOP BAR WITH CLOSE BUTTON ---
+        # --- TOP BAR ---
         top_bar = QHBoxLayout()
         top_bar.addStretch()
-
         close_btn = QPushButton("✕")
-        close_btn.setFixedSize(28, 28)
+        close_btn.setFixedSize(26, 26)
         close_btn.setCursor(Qt.PointingHandCursor)
         close_btn.setStyleSheet("""
             QPushButton {
                 background-color: #222;
-                color: #eee;
+                color: #888;
                 border: 1px solid #444;
-                border-radius: 6px;
-                font-size: 14px;
+                border-radius: 5px;
             }
             QPushButton:hover {
-                background-color: #10b981;
-                color: black;
-                border-color: #10b981;
+                background-color: #ef4444;
+                color: white;
             }
         """)
-        close_btn.clicked.connect(self.close)
-
+        close_btn.clicked.connect(self.hide)
         top_bar.addWidget(close_btn)
         main_layout.addLayout(top_bar)
 
         # --- GRID OF KEYS ---
         grid = QGridLayout()
         grid.setSpacing(10)
-        grid.setContentsMargins(10, 0, 10, 10)
         main_layout.addLayout(grid)
 
         self.labels = []
 
         for row in range(4):
             for col in range(4):
-                index = row * 4 + col
-
                 label = QLabel()
                 label.setAlignment(Qt.AlignCenter)
-                label.setMinimumSize(100, 60)
-
-                label.setStyleSheet("""
-                    QLabel {
-                        border: 1px solid #333333;
-                        border-radius: 4px;
-                        background-color: #111111;
-                        color: #e5e5e5;
-                        font-family: "Consolas";
-                    }
-                    QLabel:hover {
-                        border-color: #10b981;
-                    }
-                """)
+                label.setWordWrap(True) # Solution for long labels
+                label.setFixedSize(85, 85) # Perfect Squares
+                label.setContentsMargins(5, 5, 5, 5) # Internal padding
 
                 grid.addWidget(label, row, col)
                 self.labels.append(label)
@@ -102,39 +82,50 @@ class OverlayWindow(QWidget):
         self.refresh()
 
     def refresh(self):
+        """Refresh overlay contents based on current preset."""
         data = self.preset_manager.current_preset_data or {}
         keys = data.get("keys", [])
 
         for i, label in enumerate(self.labels):
+            # MACRO KEYS (1-12)
             if i < 12:
                 if i < len(keys):
                     action = keys[i]
-                    # Use the custom label if set, otherwise capitalize the type
-                    display_name = action.get("label") or action.get("type", "none").replace("_", " ").upper()
+                    action_type = action.get("type", "none")
                     
-                    # Clean multi-line format without extra symbols
-                    label.setText(f"{i+1}\n{display_name}")
+                    if action_type == "none":
+                        label.setText(f"<i style='color:#444;'>{i+1}</i>")
+                        label.setStyleSheet("background-color: rgba(15, 15, 15, 150); border: 1px solid #222;")
+                    else:
+                        display_name = action.get("label") or action_type.replace("_", " ").title()
+                        # HTML used to make the number small and the text centered/wrapped
+                        label.setText(f"<div style='font-size: 9px; color: #10b981; margin-bottom: 2px;'>{i+1}</div>"
+                                      f"<div style='font-size: 11px;'>{display_name}</div>")
+                        label.setStyleSheet("background-color: #111; border: 1px solid #10b981; color: white;")
                 else:
-                    label.setText(f"{i+1}\nEMPTY")
+                    label.setText(f"<i style='color:#444;'>{i+1}</i>")
+            
+            # FUNCTION KEYS (13-16) - Match Main Page Styling
             else:
-                names = ["APP", "LAYER", "PREV", "NEXT"]
-                label.setText(names[i - 12])
+                names = ["App", "Layer", "Prev", "Next"]
+                label.setText(f"<div style='font-size: 12px;'>{names[i - 12]}</div>")
+                # Styled to match 'fixed-key' class from main.css
+                label.setStyleSheet("""
+                    background-color: #0f1210; 
+                    color: #34d399; 
+                    border: 1px solid #064e3b;
+                    font-weight: bold;
+                """)
 
     def show_on_primary_bottom_left(self):
-        """Show overlay at bottom-left of the primary monitor."""
         self.adjustSize()
-
         screen = QApplication.primaryScreen().geometry()
-        x = screen.left() + 20
-        y = screen.bottom() - self.height() - 20
-
+        x = screen.left() + 30
+        y = screen.bottom() - self.height() - 30
         self.move(x, y)
         self.show()
         self.raise_()
 
     def keyPressEvent(self, event):
-        """Close overlay with ESC."""
-        if event.key() == Qt.Key_Escape:
-            self.close()
-        else:
-            super().keyPressEvent(event)
+        if event.key() == Qt.Key_Escape: self.hide()
+        else: super().keyPressEvent(event)

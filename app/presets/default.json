@@ -2,9 +2,8 @@
     "name": "default",
     "keys": [
         {
-            "type": "run_command",
-            "value": "ipconfig",
-            "label": ""
+            "type": "none",
+            "value": ""
         },
         {
             "type": "none",
