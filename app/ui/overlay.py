@@ -127,21 +127,19 @@ class OverlayWindow(QWidget):
                         
                         if not icon_set:
                             display_name = action.get("label") or action_type.replace("_", " ").title()
-                            # HTML used to make the number small and the text centered/wrapped
-                            # We use a spans with explicit styling to prevent inheritance issues
-                            label.setText(f"<div style='font-family: Segoe UI, sans-serif; font-weight: 400; text-align: center;'>"
-                                          f"<div style='font-size: 9px; color: #10b981; margin-bottom: 2px;'>{i+1}</div>"
-                                          f"<div style='font-size: 11px; color: white;'>{display_name}</div>"
-                                          f"</div>")
+                            # FORCE styling using span and css injection directly
+                            label.setText(f"<html><head/><body><p align='center'>"
+                                          f"<span style='font-size:9pt; font-weight:400; color:#10b981;'>{i+1}</span><br/>"
+                                          f"<span style='font-size:11pt; font-weight:400; color:#ffffff;'>{display_name}</span>"
+                                          f"</p></body></html>")
                             
+                        # Remove ambiguous selector. Apply properties directly.
                         label.setStyleSheet("""
-                            QLabel {
-                                background-color: #111; 
-                                border: 1px solid #10b981; 
-                                color: white; 
-                                font-weight: 400;
-                                font-family: 'Segoe UI', sans-serif;
-                            }
+                            background-color: #111; 
+                            border: 1px solid #10b981; 
+                            color: white; 
+                            font-weight: normal;
+                            font-family: Arial, sans-serif;
                         """)
                 else:
                     label.setText(f"<i style='color:#444;'>{i+1}</i>")
