@@ -41,6 +41,8 @@ class MacropadGrid(QWidget):
         else:
             if ActionEditor(index, self.preset_manager).exec():
                 self.main_window.view.reload_all_pages()
+                if self.main_window.overlay:
+                     self.main_window.overlay.refresh()
 
 class MainView(QWidget):
     def __init__(self, preset_manager, main_window):
@@ -70,6 +72,8 @@ class MainView(QWidget):
         side_lyt.addStretch()
         self.status_label = QLabel("OFFLINE"); self.status_label.setObjectName("statusLabel")
         side_lyt.addWidget(self.status_label)
+        
+        self.is_connected = False
 
         self.pages = QStackedWidget()
         layout.addWidget(self.sidebar)
@@ -107,7 +111,11 @@ class MainView(QWidget):
         mapped_count = self.preset_manager.count_total_mapped_keys()
         row.addWidget(self.info_card("MAPPED KEYS", str(mapped_count)))
         
-        self.conn_card = self.info_card("CONNECTION", "OFFLINE")
+        status = "ACTIVE" if self.is_connected else "OFFLINE"
+        color = "#10b981" if self.is_connected else "#ef4444"
+        
+        self.conn_card = self.info_card("CONNECTION", status)
+        self.conn_card.value_label.setStyleSheet(f"color: {color}; font-weight: bold;")
         row.addWidget(self.conn_card)
         
         lyt.addLayout(row); lyt.addStretch()
@@ -240,6 +248,7 @@ class MainView(QWidget):
             self.switch_page(0) # Go to Dashboard to see updated count
 
     def update_connection_state(self, connected):
+        self.is_connected = connected
         status = "ACTIVE" if connected else "OFFLINE"
         color = "#10b981" if connected else "#ef4444"
         if hasattr(self, 'status_label'):

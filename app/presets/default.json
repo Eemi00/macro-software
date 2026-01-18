@@ -2,12 +2,16 @@
     "name": "default",
     "keys": [
         {
-            "type": "none",
-            "value": ""
+            "type": "key_combo",
+            "value": "CTRL+ALT+I",
+            "label": "mute mic",
+            "icon": "fa5s.play"
         },
         {
-            "type": "none",
-            "value": ""
+            "type": "key_combo",
+            "value": "CTRL+ALT+I",
+            "label": "sdfsdfsdfds",
+            "icon": "C:\\.Code\\macro-software\\presets\\icons\\Forward.svg"
         },
         {
             "type": "none",

@@ -1,7 +1,10 @@
 # ui/overlay.py
 
 from PySide6.QtWidgets import QWidget, QGridLayout, QLabel, QFrame, QVBoxLayout, QApplication, QPushButton, QHBoxLayout
+from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
+import os
+import qtawesome as qta
 
 
 class OverlayWindow(QWidget):
@@ -92,16 +95,54 @@ class OverlayWindow(QWidget):
                 if i < len(keys):
                     action = keys[i]
                     action_type = action.get("type", "none")
+                    icon_path = action.get("icon", "")
                     
                     if action_type == "none":
+                        label.clear()
                         label.setText(f"<i style='color:#444;'>{i+1}</i>")
                         label.setStyleSheet("background-color: rgba(15, 15, 15, 150); border: 1px solid #222;")
                     else:
-                        display_name = action.get("label") or action_type.replace("_", " ").title()
-                        # HTML used to make the number small and the text centered/wrapped
-                        label.setText(f"<div style='font-size: 9px; color: #10b981; margin-bottom: 2px;'>{i+1}</div>"
-                                      f"<div style='font-size: 11px;'>{display_name}</div>")
-                        label.setStyleSheet("background-color: #111; border: 1px solid #10b981; color: white;")
+                        label.clear()
+                        icon_set = False
+                        
+                        # 1. Custom File
+                        if icon_path and os.path.exists(icon_path):
+                            pix = QPixmap(icon_path)
+                            if not pix.isNull():
+                                label.setPixmap(pix.scaled(60, 60, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                                icon_set = True
+
+                        # 2. FontAwesome Icon
+                        if not icon_set and icon_path:
+                            try:
+                                # Simple check for fa prefix or assumes it might be an ID if not a file
+                                if "fa" in icon_path or "." in icon_path:
+                                    icon = qta.icon(icon_path, color="white")
+                                    pix = icon.pixmap(60, 60)
+                                    if not pix.isNull():
+                                        label.setPixmap(pix)
+                                        icon_set = True
+                            except:
+                                pass
+                        
+                        if not icon_set:
+                            display_name = action.get("label") or action_type.replace("_", " ").title()
+                            # HTML used to make the number small and the text centered/wrapped
+                            # We use a spans with explicit styling to prevent inheritance issues
+                            label.setText(f"<div style='font-family: Segoe UI, sans-serif; font-weight: 400; text-align: center;'>"
+                                          f"<div style='font-size: 9px; color: #10b981; margin-bottom: 2px;'>{i+1}</div>"
+                                          f"<div style='font-size: 11px; color: white;'>{display_name}</div>"
+                                          f"</div>")
+                            
+                        label.setStyleSheet("""
+                            QLabel {
+                                background-color: #111; 
+                                border: 1px solid #10b981; 
+                                color: white; 
+                                font-weight: 400;
+                                font-family: 'Segoe UI', sans-serif;
+                            }
+                        """)
                 else:
                     label.setText(f"<i style='color:#444;'>{i+1}</i>")
             

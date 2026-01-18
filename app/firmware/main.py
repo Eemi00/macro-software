@@ -6,7 +6,7 @@ button_pins = [
     1, 2, 3, 4,
     5, 6, 7, 8,
     9, 10, 11, 12,
-    13, 14, 16, 18
+    13, 14, 18, 22
 ]
 
 # Create input pins with pull-up resistors
