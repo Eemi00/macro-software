@@ -66,7 +66,7 @@ class OverlayWindow(QWidget):
 
         # --- GRID OF KEYS ---
         grid = QGridLayout()
-        grid.setSpacing(10)
+        grid.setSpacing(12)  # Increased spacing for cleaner look
         main_layout.addLayout(grid)
 
         self.labels = []
@@ -75,9 +75,9 @@ class OverlayWindow(QWidget):
             for col in range(4):
                 label = QLabel()
                 label.setAlignment(Qt.AlignCenter)
-                label.setWordWrap(True) # Solution for long labels
-                label.setFixedSize(85, 85) # Perfect Squares
-                label.setContentsMargins(5, 5, 5, 5) # Internal padding
+                label.setWordWrap(True) 
+                label.setFixedSize(80, 80) # Slightly smaller squares
+                label.setContentsMargins(4, 4, 4, 4)
 
                 grid.addWidget(label, row, col)
                 self.labels.append(label)
@@ -99,8 +99,12 @@ class OverlayWindow(QWidget):
                     
                     if action_type == "none":
                         label.clear()
-                        label.setText(f"<i style='color:#444;'>{i+1}</i>")
-                        label.setStyleSheet("background-color: rgba(15, 15, 15, 150); border: 1px solid #222;")
+                        label.setText(f"<i style='color:#666;'>{i+1}</i>")
+                        label.setStyleSheet("""
+                            background-color: rgba(20, 20, 20, 150); 
+                            border: 1px solid #333; 
+                            border-radius: 8px;
+                        """)
                     else:
                         label.clear()
                         icon_set = False
@@ -109,16 +113,17 @@ class OverlayWindow(QWidget):
                         if icon_path and os.path.exists(icon_path):
                             pix = QPixmap(icon_path)
                             if not pix.isNull():
-                                label.setPixmap(pix.scaled(60, 60, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                                # Smaller icons (40x40)
+                                label.setPixmap(pix.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation))
                                 icon_set = True
 
                         # 2. FontAwesome Icon
                         if not icon_set and icon_path:
                             try:
-                                # Simple check for fa prefix or assumes it might be an ID if not a file
                                 if "fa" in icon_path or "." in icon_path:
-                                    icon = qta.icon(icon_path, color="white")
-                                    pix = icon.pixmap(60, 60)
+                                    icon = qta.icon(icon_path, color="#e0e0e0") # Lighter icon color
+                                    # Smaller icons (40x40)
+                                    pix = icon.pixmap(40, 40)
                                     if not pix.isNull():
                                         label.setPixmap(pix)
                                         icon_set = True
@@ -127,33 +132,34 @@ class OverlayWindow(QWidget):
                         
                         if not icon_set:
                             display_name = action.get("label") or action_type.replace("_", " ").title()
-                            # FORCE styling using span and css injection directly
                             label.setText(f"<html><head/><body><p align='center'>"
-                                          f"<span style='font-size:9pt; font-weight:400; color:#10b981;'>{i+1}</span><br/>"
-                                          f"<span style='font-size:11pt; font-weight:400; color:#ffffff;'>{display_name}</span>"
+                                          f"<span style='font-size:8pt; font-weight:600; color:#10b981;'>{i+1}</span><br/>"
+                                          f"<span style='font-size:10pt; font-weight:500; color:#ffffff;'>{display_name}</span>"
                                           f"</p></body></html>")
-                            
-                        # Remove ambiguous selector. Apply properties directly.
+                        
                         label.setStyleSheet("""
-                            background-color: #111; 
-                            border: 1px solid #10b981; 
-                            color: white; 
-                            font-weight: normal;
-                            font-family: Arial, sans-serif;
+                            QLabel {
+                                background-color: #1a1a1a; 
+                                border: 1px solid #10b981; 
+                                border-radius: 8px;
+                                color: white; 
+                                font-family: 'Segoe UI', sans-serif;
+                            }
                         """)
                 else:
                     label.setText(f"<i style='color:#444;'>{i+1}</i>")
             
-            # FUNCTION KEYS (13-16) - Match Main Page Styling
+            # FUNCTION KEYS (13-16)
             else:
                 names = ["App", "Layer", "Prev", "Next"]
-                label.setText(f"<div style='font-size: 12px;'>{names[i - 12]}</div>")
-                # Styled to match 'fixed-key' class from main.css
+                label.setText(f"<div style='font-size: 11px; font-weight:600;'>{names[i - 12]}</div>")
                 label.setStyleSheet("""
-                    background-color: #0f1210; 
-                    color: #34d399; 
-                    border: 1px solid #064e3b;
-                    font-weight: bold;
+                    QLabel {
+                        background-color: #0f1210; 
+                        color: #34d399; 
+                        border: 1px solid #064e3b;
+                        border-radius: 8px;
+                    }
                 """)
 
     def show_on_primary_bottom_left(self):

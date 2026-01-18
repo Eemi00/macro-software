@@ -115,7 +115,7 @@ class MainView(QWidget):
         color = "#10b981" if self.is_connected else "#ef4444"
         
         self.conn_card = self.info_card("CONNECTION", status)
-        self.conn_card.value_label.setStyleSheet(f"color: {color}; font-weight: bold;")
+        self.conn_card.value_label.setStyleSheet(f"color: {color};")
         row.addWidget(self.conn_card)
         
         lyt.addLayout(row); lyt.addStretch()
