@@ -6,6 +6,7 @@ from pathlib import Path
 from PySide6.QtWidgets import QApplication, QMainWindow, QSystemTrayIcon, QMenu
 from PySide6.QtCore import Qt, Signal, QEvent
 from PySide6.QtGui import QAction, QIcon
+from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
 from ui.main_window import MainView
 from ui.overlay import OverlayWindow
@@ -160,19 +161,41 @@ if __name__ == "__main__":
     app.setApplicationName("Macropad Controller")
     app.setApplicationDisplayName("Macropad Controller")
 
+    # Single Instance Check
+    socket = QLocalSocket()
+    socket.connectToServer("MacropadControllerV3")
+    if socket.waitForConnected(500):
+        # Notify the existing instance to show itself
+        sys.exit(0)
+    
+    # Create server to reserve the instance name
+    local_server = QLocalServer()
+    local_server.removeServer("MacropadControllerV3")
+    local_server.listen("MacropadControllerV3")
+
     # Start logic
     window = MainWindow()
+    
+    # Attach server and logic to bring window to front if launched again
+    window.local_server = local_server
+    def on_new_connection():
+        # Accept the connection to clear the queue, then show window
+        nxt_sock = local_server.nextPendingConnection()
+        if nxt_sock:
+            nxt_sock.close()
+        window.show_interface()
+    local_server.newConnection.connect(on_new_connection)
 
-    # Check if we should start in tray
-    should_start_minimized = "--minimized" in sys.argv
+    # Check if we should start visible (default is minimized to tray now)
+    should_start_visible = "--show" in sys.argv
     
     # Logic to decide visibility on startup
-    if should_start_minimized:
+    if should_start_visible:
+        window.show()
+    else:
         window.hide()
         # Ensure the tray icon is definitely visible
         if hasattr(window, 'tray'):
             window.tray.show()
-    else:
-        window.show()
             
     sys.exit(app.exec())

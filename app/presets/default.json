@@ -2,28 +2,34 @@
     "name": "default",
     "keys": [
         {
-            "type": "none",
-            "value": "",
-            "label": "",
-            "icon": ""
+            "type": "open_website",
+            "value": "https://open.spotify.com/",
+            "label": "Open Spotify",
+            "icon": "fa5b.spotify"
         },
         {
-            "type": "none",
-            "value": "",
-            "label": "",
-            "icon": ""
+            "type": "open_website",
+            "value": "https://www.youtube.com/",
+            "label": "Open YouTube",
+            "icon": "fa5b.youtube"
         },
         {
-            "type": "none",
-            "value": ""
+            "type": "open_website",
+            "value": "https://github.com/Eemi00",
+            "label": "Open GitHub",
+            "icon": "C:/T\u00e4rkeet/macropad/icons/github.png"
         },
         {
-            "type": "none",
-            "value": ""
+            "type": "open_website",
+            "value": "https://dash.cloudflare.com/a7c8f7009579aac1f5066a4de3a10152/home/domains",
+            "label": "Open CloudFlare",
+            "icon": "C:/T\u00e4rkeet/macropad/icons/cloudflare.png"
         },
         {
-            "type": "none",
-            "value": ""
+            "type": "open_website",
+            "value": "https://github.com/copilot",
+            "label": "Open Copilot",
+            "icon": "C:/T\u00e4rkeet/macropad/icons/githubcopilot.png"
         },
         {
             "type": "none",
