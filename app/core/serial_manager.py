@@ -5,8 +5,9 @@ import time
 from PySide6.QtCore import QObject, Signal
 
 class SerialManager(QObject):
+    """Manages the serial connection to the macropad hardware."""
     connection_status = Signal(bool)
-    key_pressed = Signal(int)  # NEW: Signal to safely send data to main thread
+    key_pressed = Signal(int)  # Signal to safely send data to main thread
 
     def __init__(self, port, callback, baudrate=115200):
         super().__init__()
@@ -18,10 +19,12 @@ class SerialManager(QObject):
         self.key_pressed.connect(callback)
 
     def start(self):
+        """Starts the serial listening thread."""
         self.running = True
         threading.Thread(target=self._run, daemon=True).start()
 
     def _run(self):
+        """Internal loop to read from serial port."""
         while self.running:
             try:
                 if not self.ser:
@@ -30,11 +33,14 @@ class SerialManager(QObject):
                 
                 line = self.ser.readline().decode().strip()
                 if line.startswith("KEY:"):
-                    # EMIT signal instead of calling callback directly
+                    # Emit signal instead of calling callback directly
                     self.key_pressed.emit(int(line.split(":")[1]))
-            except:
+            except (OSError, serial.SerialException, ValueError):
                 if self.ser:
-                    self.ser.close()
+                    try:
+                        self.ser.close()
+                    except Exception:
+                        pass
                     self.ser = None
                 self.connection_status.emit(False)
                 time.sleep(2)

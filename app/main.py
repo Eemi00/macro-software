@@ -2,23 +2,24 @@ import sys
 import ctypes
 import os
 from pathlib import Path
+
 from PySide6.QtWidgets import QApplication, QMainWindow, QSystemTrayIcon, QMenu
 from PySide6.QtCore import Qt, Signal, QEvent
 from PySide6.QtGui import QAction, QIcon
 
-# SET TO FALSE WHEN HARDWARE IS CONNECTED
-UI_ONLY = False 
-
 from ui.main_window import MainView
+from ui.overlay import OverlayWindow
 from core.preset_manager import PresetManager
 from core.serial_manager import SerialManager
 from core.action_executor import ActionExecutor
-from ui.overlay import OverlayWindow
+
+# Set to False when hardware is connected
+UI_ONLY = False 
 
 # Windows Taskbar Icon Fix
 try:
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("macropad.controller.v3")
-except:
+except Exception:
     pass
 
 class MainWindow(QMainWindow):
@@ -46,11 +47,11 @@ class MainWindow(QMainWindow):
         self.presets.load_preset("default")
         self.executor = ActionExecutor()
 
-        # UI
+        # UI Initialization
         self.view = MainView(self.presets, self)
         self.setCentralWidget(self.view)
 
-        # Stylesheet
+        # Load Stylesheet
         css_path = self.base_path / "styles" / "main.css"
         if css_path.exists():
             with open(css_path, "r") as f:
@@ -71,13 +72,16 @@ class MainWindow(QMainWindow):
         self.tray = QSystemTrayIcon(self.app_icon, self)
         self.tray.setIcon(QIcon(icon_path))
         self.tray.setToolTip("Macropad Controller")
+        
         menu = QMenu()
         menu.addAction("Show Grid", self.show_interface)
         menu.addSeparator()
         menu.addAction("Exit", QApplication.quit)
+        
         self.tray.setContextMenu(menu)
         self.tray.show()
         self.tray.activated.connect(lambda r: self.show_interface() if r == QSystemTrayIcon.DoubleClick else None)
+
 
     def show_interface(self):
         self.showNormal()
@@ -105,15 +109,14 @@ class MainWindow(QMainWindow):
         if not name: return
         self.presets.load_preset(name)
         
-        # --- NEW NOTIFICATION LOGIC ---
+        # New notification logic
         if self.isHidden() and hasattr(self, 'tray'):
             self.tray.showMessage(
                 "Preset Switched",
                 f"Active Profile: {name.upper()}",
                 QSystemTrayIcon.Information,
-                500 # Duration in milliseconds
+                500  # Duration in milliseconds
             )
-        # ------------------------------
 
         if self.overlay: self.overlay.refresh()
         self.view.reload_all_pages()
@@ -153,21 +156,18 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     
-    # --- ADD THESE TWO LINES TO FIX THE "WEIRD NAME" ---
+    # Fix the application name for taskbar/tray
     app.setApplicationName("Macropad Controller")
     app.setApplicationDisplayName("Macropad Controller")
-    # --------------------------------------------------
 
-    current_dir = Path(__file__).resolve().parent
-    import os
-    os.chdir(current_dir)
-
+    # Start logic
     window = MainWindow()
 
-    # LOGIC: Check if we should start in tray
-    # If you want it to ALWAYS start in tray, just use window.hide()
-    # If you want it only via shortcut, use the --minimized check
-    if "--minimized" in sys.argv or True: # Force True for tray-start by default
+    # Check if we should start in tray
+    should_start_minimized = "--minimized" in sys.argv
+    
+    # Logic to decide visibility on startup
+    if should_start_minimized:
         window.hide()
         # Ensure the tray icon is definitely visible
         if hasattr(window, 'tray'):

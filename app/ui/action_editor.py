@@ -96,7 +96,7 @@ class ActionEditor(QDialog):
         layout.setSpacing(12)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        # 1. Header (Clean, No underlines)
+        # Header
         header = QLabel(f"Editing Preset: {preset_name}")
         header.setStyleSheet("color: #10b981; font-weight: 800; font-size: 14px; border: none;")
         layout.addWidget(header)

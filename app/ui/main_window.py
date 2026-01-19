@@ -7,6 +7,8 @@ from PySide6.QtCore import Qt
 from ui.action_editor import ActionEditor
 
 class MacropadGrid(QWidget):
+    """The 4x4 grid of buttons representing the physical macropad."""
+    
     def __init__(self, preset_manager, main_window):
         super().__init__()
         self.preset_manager = preset_manager
@@ -35,6 +37,7 @@ class MacropadGrid(QWidget):
             layout.addWidget(btn, row, col)
 
     def on_click(self, index):
+        """Handle button click: Execute action in test mode or open editor."""
         if self.main_window.test_mode:
             keys = self.preset_manager.current_preset_data.get("keys", [])
             if index < len(keys): self.main_window.executor.execute(keys[index], force=True)
@@ -45,6 +48,8 @@ class MacropadGrid(QWidget):
                      self.main_window.overlay.refresh()
 
 class MainView(QWidget):
+    """The main central widget containing sidebar and pages."""
+
     def __init__(self, preset_manager, main_window):
         super().__init__()
         self.preset_manager = preset_manager
@@ -54,7 +59,7 @@ class MainView(QWidget):
         layout.setContentsMargins(0,0,0,0)
         layout.setSpacing(0)
 
-        # Sidebar
+        # Sidebar setup
         self.sidebar = QFrame(); self.sidebar.setObjectName("sidebar")
         side_lyt = QVBoxLayout(self.sidebar)
         

@@ -1,6 +1,9 @@
 # ui/overlay.py
 
-from PySide6.QtWidgets import QWidget, QGridLayout, QLabel, QFrame, QVBoxLayout, QApplication, QPushButton, QHBoxLayout
+from PySide6.QtWidgets import (
+    QWidget, QGridLayout, QLabel, QFrame, QVBoxLayout, QApplication, 
+    QPushButton, QHBoxLayout, QGraphicsDropShadowEffect
+)
 from PySide6.QtGui import QPixmap, QColor
 from PySide6.QtCore import Qt
 import os
@@ -27,8 +30,6 @@ class OverlayWindow(QWidget):
     def build_ui(self):
         outer_layout = QVBoxLayout(self)
         outer_layout.setContentsMargins(10, 10, 10, 10) # Add margin for shadow
-
-        from PySide6.QtWidgets import QGraphicsDropShadowEffect
         
         frame = QFrame()
         frame.setObjectName("overlayFrame")
@@ -54,7 +55,7 @@ class OverlayWindow(QWidget):
         main_layout.setContentsMargins(16, 16, 16, 16)
         main_layout.setSpacing(12)
 
-        # --- TOP BAR ---
+        # Top Bar
         top_bar = QHBoxLayout()
         title_label = QLabel("MACROPAD")
         title_label.setObjectName("titleLabel")
@@ -91,7 +92,7 @@ class OverlayWindow(QWidget):
         top_bar.addWidget(close_btn)
         main_layout.addLayout(top_bar)
 
-        # --- GRID OF KEYS ---
+        # Grid of Keys
         grid = QGridLayout()
         grid.setSpacing(8)
         main_layout.addLayout(grid)
