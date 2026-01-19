@@ -154,6 +154,32 @@ class ActionEditor(QDialog):
 
         # 5. Buttons
         btn_row = QHBoxLayout()
+        
+        remove_btn = QPushButton("Remove Config")
+        remove_btn.setCursor(Qt.PointingHandCursor)
+        remove_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #111;
+                border: 1px solid #333;
+                border-radius: 6px;
+                padding: 8px 16px;
+                color: #ef4444;
+                font-weight: 600;
+            }
+            QPushButton:hover {
+                border: 1px solid #ef4444;
+                background-color: #290a0a;
+            }
+            QPushButton:pressed {
+                background-color: #ef4444;
+                color: white;
+            }
+        """)
+        remove_btn.clicked.connect(self.remove_config)
+        btn_row.addWidget(remove_btn)
+        
+        btn_row.addStretch()
+
         save_btn = QPushButton("Save")
         cancel_btn = QPushButton("Cancel")
         save_btn.clicked.connect(self.save)
@@ -163,6 +189,18 @@ class ActionEditor(QDialog):
         layout.addLayout(btn_row)
 
         self.load_data()
+
+    def remove_config(self):
+        keys = self.preset_manager.current_preset_data.get("keys", [])
+        if self.key_index < len(keys):
+            keys[self.key_index] = {
+                "type": "none",
+                "value": "",
+                "label": "",
+                "icon": ""
+            }
+            self.preset_manager.save_data(self.preset_manager.current_preset, self.preset_manager.current_preset_data)
+        self.accept()
 
     def setup_inputs(self):
         # 0: None
