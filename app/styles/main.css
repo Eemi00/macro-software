@@ -81,6 +81,15 @@ QScrollBar::handle:vertical {
 #dashboardPage, #keysPage, #presetsPage {
     background: #050505;
 }
+
+#dashboardPage {
+    background: qlineargradient(
+        x1:0, y1:0, x2:1, y2:1,
+        stop:0 #050505,
+        stop:0.5 #0a0a0a,
+        stop:1 #050505
+    );
+}
  
 #pageTitle {
     font-size: 32px;

@@ -32,12 +32,16 @@
             "icon": "C:/T\u00e4rkeet/macropad/icons/githubcopilot.png"
         },
         {
-            "type": "none",
-            "value": ""
+            "type": "open_website",
+            "value": "https://mail.google.com/mail/u/1/#inbox",
+            "label": "Open Gmail",
+            "icon": "C:/T\u00e4rkeet/macropad/icons/gmail.png"
         },
         {
-            "type": "none",
-            "value": ""
+            "type": "open_website",
+            "value": "https://chatgpt.com/",
+            "label": "Open ChatGpt",
+            "icon": "C:/T\u00e4rkeet/macropad/icons/chatgpt.png"
         },
         {
             "type": "none",

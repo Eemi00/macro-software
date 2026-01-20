@@ -1,9 +1,11 @@
+import os
+
 from PySide6.QtWidgets import (
     QWidget, QPushButton, QGridLayout, QVBoxLayout, QHBoxLayout,
     QLabel, QListWidget, QListWidgetItem, QStackedWidget, QFrame,
     QInputDialog, QMessageBox
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QUrl
 from ui.action_editor import ActionEditor
 
 class MacropadGrid(QWidget):
@@ -104,8 +106,15 @@ class MainView(QWidget):
         self.pages.addWidget(self.build_presets())
         self.switch_page(cur_idx)
 
+    def build_model_view(self):
+        model_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "assets", "macropad.glb")
+        )
+        return RotatingModelWidget(model_path)
+
     def build_dashboard(self):
         page = QFrame()
+        page.setObjectName("dashboardPage")
         lyt = QVBoxLayout(page); lyt.setContentsMargins(50,50,50,50)
         title = QLabel("Command Center"); title.setObjectName("pageTitle"); lyt.addWidget(title)
         
@@ -122,8 +131,11 @@ class MainView(QWidget):
         self.conn_card = self.info_card("CONNECTION", status)
         self.conn_card.value_label.setStyleSheet(f"color: {color};")
         row.addWidget(self.conn_card)
-        
-        lyt.addLayout(row); lyt.addStretch()
+
+        lyt.addLayout(row)
+        lyt.addSpacing(20)
+        lyt.addWidget(self.build_model_view(), alignment=Qt.AlignCenter)
+        lyt.addStretch()
         return page
 
     def info_card(self, t, v):
@@ -260,3 +272,155 @@ class MainView(QWidget):
             self.status_label.setText(status); self.status_label.setStyleSheet(f"color: {color};")
         if hasattr(self, 'conn_card'):
             self.conn_card.value_label.setText(status); self.conn_card.value_label.setStyleSheet(f"color: {color};")
+
+
+class RotatingModelWidget(QWidget):
+    def __init__(self, model_path, parent=None):
+        super().__init__(parent)
+        self.setMinimumSize(520, 320)
+
+        from PySide6.QtWebEngineWidgets import QWebEngineView
+        from PySide6.QtWebEngineCore import QWebEngineSettings
+
+        self.view = QWebEngineView()
+        self.view.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.view.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.view.setFocusPolicy(Qt.NoFocus)
+        self.view.setContextMenuPolicy(Qt.NoContextMenu)
+        self.view.setStyleSheet("background: transparent;")
+        self.view.page().setBackgroundColor(Qt.transparent)
+
+        settings = self.view.settings()
+        settings.setAttribute(QWebEngineSettings.LocalContentCanAccessFileUrls, True)
+        settings.setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
+
+        base_url = QUrl.fromLocalFile(os.path.dirname(model_path) + os.sep)
+        self.view.setHtml(self._build_html(), base_url)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.view)
+
+    def _build_html(self):
+        return """<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <style>
+        html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+        #wrap { position: relative; width: 100%; height: 100%; }
+        #c { width: 100%; height: 100%; display: block; background: transparent; position: relative; z-index: 1; }
+    
+    </style>
+</head>
+<body>
+    <div id="wrap">
+        <canvas id="c"></canvas>
+    </div>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+        import { RoomEnvironment } from 'https://unpkg.com/three@0.160.0/examples/jsm/environments/RoomEnvironment.js';
+
+        const canvas = document.getElementById('c');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setPixelRatio(window.devicePixelRatio || 1);
+        renderer.setClearColor(0x000000, 0);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 0.95;
+        renderer.physicallyCorrectLights = true;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        const scene = new THREE.Scene();
+        scene.background = null;
+
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+        const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+        camera.position.set(0, 0, 5);
+
+        const keyLight = new THREE.DirectionalLight(0xffffff, 2.3);
+        keyLight.castShadow = true;
+        keyLight.shadow.mapSize.set(1024, 1024);
+        keyLight.shadow.bias = -0.00015;
+        scene.add(keyLight);
+
+        const fillLight = new THREE.DirectionalLight(0xffffff, 0.9);
+        fillLight.position.set(-6, 3, 8);
+        scene.add(fillLight);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const rim = new THREE.DirectionalLight(0xffffff, 0.8);
+        rim.position.set(-6, -2, -8);
+        scene.add(rim);
+
+        const loader = new GLTFLoader();
+        let model = null;
+        loader.load('macropad.glb', (gltf) => {
+                        model = gltf.scene;
+                        model.traverse((obj) => {
+                            if (obj.isMesh && obj.material) {
+                                const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+                                mats.forEach((m) => {
+                                    if (m.isMeshStandardMaterial) {
+                                        m.metalness = 0.0;
+                                        m.roughness = 0.9;
+                                        m.envMapIntensity = 0.0;
+                                    }
+                                    m.needsUpdate = true;
+                                });
+                                obj.castShadow = true;
+                                obj.receiveShadow = true;
+                            }
+                        });
+            scene.add(model);
+
+            const box = new THREE.Box3().setFromObject(model);
+            const size = box.getSize(new THREE.Vector3()).length();
+            const center = box.getCenter(new THREE.Vector3());
+            model.position.sub(center);
+            model.position.y += size * 0.19;
+            const scale = 140.0 / size;
+            model.scale.setScalar(scale);
+
+            const sphere = new THREE.Sphere();
+            box.getBoundingSphere(sphere);
+            camera.position.set(0, 0, sphere.radius * 1.8);
+            camera.lookAt(0, 0, 0);
+        }, undefined, (err) => {
+            console.error('Failed to load GLB', err);
+        });
+
+        function resize() {
+            const w = canvas.clientWidth;
+            const h = canvas.clientHeight;
+            renderer.setSize(w, h, false);
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (model) model.rotation.y += 0.003;
+            keyLight.position.copy(camera.position);
+            keyLight.target.position.set(0, 0, 0);
+            keyLight.target.updateMatrixWorld();
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>"""
