@@ -21,7 +21,7 @@ class MacropadGrid(QWidget):
         for i in range(16):
             row, col = divmod(i, 4)
             btn = QPushButton()
-            btn.setFixedSize(100, 100)
+            btn.setFixedSize(120, 120)
             btn.setCursor(Qt.PointingHandCursor)
 
             if row == 3:
@@ -33,8 +33,23 @@ class MacropadGrid(QWidget):
                 elif col == 2: btn.clicked.connect(self.main_window.prev_preset)
                 elif col == 3: btn.clicked.connect(self.main_window.next_preset)
             else:
-                btn.setText(f"{i + 1:02d}")
-                btn.setProperty("class", "macro-key")
+                # Get key configuration to display label and indicator
+                keys = self.preset_manager.current_preset_data.get("keys", [])
+                key_config = keys[i] if i < len(keys) else {}
+                key_label = key_config.get("label", "")
+                has_config = key_config.get("type") and key_config.get("type") != "none"
+                
+                # Display label if available, otherwise show key number
+                if key_label:
+                    btn.setText(key_label)
+                    btn.setProperty("class", "macro-key configured")
+                else:
+                    btn.setText(f"{i + 1:02d}")
+                    if has_config:
+                        btn.setProperty("class", "macro-key configured-no-label")
+                    else:
+                        btn.setProperty("class", "macro-key")
+                
                 btn.clicked.connect(lambda _, x=i: self.on_click(x))
             layout.addWidget(btn, row, col)
 

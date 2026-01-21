@@ -144,6 +144,8 @@ QPushButton[class="macro-key"] {
     color: #888888;
     font-size: 13px;
     font-weight: 600;
+    text-align: center;
+    padding: 5px;
 }
  
 QPushButton[class="macro-key"]:hover {
@@ -156,6 +158,44 @@ QPushButton[class="macro-key"]:pressed {
     background-color: #10b981;
     color: #000000;
     border: 1px solid #10b981;
+}
+
+/* CONFIGURED MACRO KEYS - with label */
+QPushButton[class~="configured"] {
+    background-color: #111111;
+    border: 2px solid #10b981; /* Green border to indicate config */
+    color: #10b981;
+}
+
+QPushButton[class~="configured"]:hover {
+    background-color: #1a1a1a;
+    border: 2px solid #34d399; /* Lighter green on hover */
+    color: #34d399;
+}
+
+QPushButton[class~="configured"]:pressed {
+    background-color: #10b981;
+    color: #000000;
+    border: 2px solid #10b981;
+}
+
+/* CONFIGURED MACRO KEYS - no label, just green border indicator */
+QPushButton[class~="configured-no-label"] {
+    background-color: #111111;
+    border: 3px solid #10b981; /* Thicker green border to indicate config */
+    color: #888888;
+}
+
+QPushButton[class~="configured-no-label"]:hover {
+    background-color: #1a1a1a;
+    border: 3px solid #34d399;
+    color: #10b981;
+}
+
+QPushButton[class~="configured-no-label"]:pressed {
+    background-color: #10b981;
+    color: #000000;
+    border: 3px solid #10b981;
 }
  
 /* FIXED KEYS (Bottom Row) */
