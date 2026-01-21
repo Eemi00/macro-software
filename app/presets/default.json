@@ -23,25 +23,25 @@
             "type": "open_website",
             "value": "https://dash.cloudflare.com/a7c8f7009579aac1f5066a4de3a10152/home/domains",
             "label": "Open CloudFlare",
-            "icon": "C:/T\u00e4rkeet/macropad/icons/cloudflare.png"
+            "icon": "fa5b.cloudflare"
         },
         {
             "type": "open_website",
             "value": "https://github.com/copilot",
             "label": "Open Copilot",
-            "icon": "C:\\.Code\\macro-software\\app\\assets\\custom_icons\\AI_GitHub Copilot.png"
+            "icon": "C:\\.Code\\macro-software\\app\\assets\\custom_icons\\AI_GitHub Copilot.webp"
         },
         {
             "type": "open_website",
             "value": "https://mail.google.com/mail/u/1/#inbox",
             "label": "Open Gmail",
-            "icon": "C:/T\u00e4rkeet/macropad/icons/gmail.png"
+            "icon": "C:\\.Code\\macro-software\\app\\assets\\custom_icons\\Brands_Gmail.png"
         },
         {
             "type": "open_website",
             "value": "https://chatgpt.com/",
             "label": "Open ChatGpt",
-            "icon": "C:/T\u00e4rkeet/macropad/icons/chatgpt.png"
+            "icon": "C:\\.Code\\macro-software\\app\\assets\\custom_icons\\AI_Open AI.png"
         },
         {
             "type": "none",

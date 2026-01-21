@@ -8,29 +8,21 @@ try:
 except ImportError:
     keyboard = None
 
-# Default safe mode prevents accidental execution during testing
-UI_ONLY = True
-
 class ActionExecutor:
     """Handles execution of configured actions."""
     
-    def execute(self, action, force=False):
+    def execute(self, action):
         """
         Executes the given action.
 
         Args:
             action (dict): The action configuration.
-            force (bool): If True, bypasses UI_ONLY safe mode.
         """
         if not action:
             return
 
         action_type = action.get("type")
         value = action.get("value", "")
-
-        if UI_ONLY and not force:
-            print(f"[UI MODE] Would execute: {action_type} -> {value}")
-            return
 
         if action_type == "none":
             return

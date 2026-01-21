@@ -14,9 +14,6 @@ from core.preset_manager import PresetManager
 from core.serial_manager import SerialManager
 from core.action_executor import ActionExecutor
 
-# Set to False when hardware is connected
-UI_ONLY = False 
-
 # Windows Taskbar Icon Fix
 try:
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("macropad.controller.v3")
@@ -59,12 +56,9 @@ class MainWindow(QMainWindow):
                 self.setStyleSheet(f.read())
 
         # Serial Connection
-        if not UI_ONLY:
-            self.serial = SerialManager(port="COM3", callback=self.handle_key_press)
-            self.serial.connection_status.connect(self.view.update_connection_state)
-            self.serial.start()
-        else:
-            self.view.update_connection_state(False)
+        self.serial = SerialManager(port="COM3", callback=self.handle_key_press)
+        self.serial.connection_status.connect(self.view.update_connection_state)
+        self.serial.start()
 
         self.show_ui_signal.connect(self.show_interface)
         self.setup_tray(icon_path)
