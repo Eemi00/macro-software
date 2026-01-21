@@ -56,6 +56,7 @@ class MainView(QWidget):
         super().__init__()
         self.preset_manager = preset_manager
         self.main_window = main_window
+        self.model_widget = None  # Cache the model to prevent reload spinning
         
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0,0,0,0)
@@ -96,21 +97,61 @@ class MainView(QWidget):
     def reload_all_pages(self):
         """Total refresh of all UI components to sync with JSON files."""
         cur_idx = self.pages.currentIndex() if self.pages.count() > 0 else 0
-        while self.pages.count():
-            w = self.pages.widget(0)
-            self.pages.removeWidget(w)
-            w.deleteLater()
         
-        self.pages.addWidget(self.build_dashboard())
-        self.pages.addWidget(self.build_keys())
-        self.pages.addWidget(self.build_presets())
+        # Only rebuild pages that aren't already cached (keys and presets pages)
+        # Keep dashboard to prevent model widget from reloading
+        if self.pages.count() == 0:
+            # First time initialization
+            self.dashboard_page = self.build_dashboard()
+            self.pages.addWidget(self.dashboard_page)
+            self.pages.addWidget(self.build_keys())
+            self.pages.addWidget(self.build_presets())
+        else:
+            # Update dashboard cards in place instead of rebuilding
+            self.update_dashboard_cards()
+            
+            # Remove old keys and presets pages
+            while self.pages.count() > 1:
+                w = self.pages.widget(1)
+                self.pages.removeWidget(w)
+                w.deleteLater()
+            
+            # Rebuild keys and presets
+            self.pages.addWidget(self.build_keys())
+            self.pages.addWidget(self.build_presets())
+        
         self.switch_page(cur_idx)
+        
+        # Update the preset label in the keys page
+        if self.pages.count() > 1:
+            keys_page = self.pages.widget(1)
+            if hasattr(keys_page, 'preset_lbl'):
+                keys_page.preset_lbl.setText(f"Current Preset: {self.preset_manager.current_preset}")
+    
+    def update_dashboard_cards(self):
+        """Update dashboard info cards without rebuilding the entire page."""
+        if not hasattr(self, 'dashboard_page'):
+            return
+        
+        # Find and update the profile card
+        profile_card = self.dashboard_page.findChild(QFrame, "profileCard")
+        if profile_card and hasattr(profile_card, 'value_label'):
+            profile_card.value_label.setText(self.preset_manager.current_preset.upper())
+        
+        # Find and update the mapped keys card
+        keys_card = self.dashboard_page.findChild(QFrame, "keysCard")
+        if keys_card and hasattr(keys_card, 'value_label'):
+            mapped_count = self.preset_manager.count_total_mapped_keys()
+            keys_card.value_label.setText(str(mapped_count))
 
     def build_model_view(self):
-        model_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "assets", "macropad.glb")
-        )
-        return RotatingModelWidget(model_path)
+        # Reuse cached model widget to prevent reload spinning on preset switch
+        if self.model_widget is None:
+            model_path = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "..", "assets", "macropad.glb")
+            )
+            self.model_widget = RotatingModelWidget(model_path)
+        return self.model_widget
 
     def build_dashboard(self):
         page = QFrame()
@@ -119,16 +160,21 @@ class MainView(QWidget):
         title = QLabel("Command Center"); title.setObjectName("pageTitle"); lyt.addWidget(title)
         
         row = QHBoxLayout()
-        row.addWidget(self.info_card("ACTIVE PROFILE", self.preset_manager.current_preset.upper()))
+        profile_card = self.info_card("ACTIVE PROFILE", self.preset_manager.current_preset.upper())
+        profile_card.setObjectName("profileCard")
+        row.addWidget(profile_card)
         
         # Mapped Keys Logic
         mapped_count = self.preset_manager.count_total_mapped_keys()
-        row.addWidget(self.info_card("MAPPED KEYS", str(mapped_count)))
+        keys_card = self.info_card("MAPPED KEYS", str(mapped_count))
+        keys_card.setObjectName("keysCard")
+        row.addWidget(keys_card)
         
         status = "ACTIVE" if self.is_connected else "OFFLINE"
         color = "#10b981" if self.is_connected else "#ef4444"
         
         self.conn_card = self.info_card("CONNECTION", status)
+        self.conn_card.setObjectName("connCard")
         self.conn_card.value_label.setStyleSheet(f"color: {color};")
         row.addWidget(self.conn_card)
 

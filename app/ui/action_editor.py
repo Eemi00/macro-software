@@ -9,37 +9,103 @@ from PySide6.QtGui import QIcon, QPixmap
 import os
 import qtawesome as qta
 
+# Organized Icon Library by Categories
 ICON_LIBRARY = {
-    "Home": "fa5s.home",
-    "Settings": "fa5s.cog",
-    "Play": "fa5s.play",
-    "Pause": "fa5s.pause",
-    "Stop": "fa5s.stop",
-    "Mute": "fa5s.volume-mute",
-    "Volume Up": "fa5s.volume-up",
-    "Volume Down": "fa5s.volume-down",
-    "Mic On": "fa5s.microphone",
-    "Mic Off": "fa5s.microphone-slash",
-    "Camera": "fa5s.video",
-    "Chat": "fa5s.comments",
-    "Music": "fa5s.music",
-    "Folder": "fa5s.folder",
-    "Back": "fa5s.arrow-left",
-    "Forward": "fa5s.arrow-right",
-    "Refresh": "fa5s.sync",
-    "Copy": "fa5s.copy",
-    "Paste": "fa5s.paste",
-    "Cut": "fa5s.cut",
-    "Save": "fa5s.save",
-    "Discord": "fa5b.discord",
-    "Twitch": "fa5b.twitch",
-    "YouTube": "fa5b.youtube",
-    "Spotify": "fa5b.spotify",
-    "OBS": "fa5s.record-vinyl",
-    "Game": "fa5s.gamepad",
-    "Code": "fa5s.code",
-    "Terminal": "fa5s.terminal",
-    "Browser": "fa5b.chrome",
+    "Brands": {
+        "Discord": "fa5b.discord",
+        "GitHub": "fa5b.github",
+        "Twitch": "fa5b.twitch",
+        "YouTube": "fa5b.youtube",
+        "Spotify": "fa5b.spotify",
+        "Chrome": "fa5b.chrome",
+        "Firefox": "fa5b.firefox",
+        "Twitter": "fa5b.twitter",
+        "Reddit": "fa5b.reddit",
+        "Steam": "fa5b.steam",
+    },
+    "Media": {
+        "Play": "fa5s.play",
+        "Pause": "fa5s.pause",
+        "Stop": "fa5s.stop",
+        "Music": "fa5s.music",
+        "Camera": "fa5s.video",
+        "Screenshot": "fa5s.screenshot",
+        "Volume Up": "fa5s.volume-up",
+        "Volume Down": "fa5s.volume-down",
+        "Mute": "fa5s.volume-mute",
+        "Mic On": "fa5s.microphone",
+        "Mic Off": "fa5s.microphone-slash",
+    },
+    "System": {
+        "Home": "fa5s.home",
+        "Settings": "fa5s.cog",
+        "Power": "fa5s.power-off",
+        "Terminal": "fa5s.terminal",
+        "Folder": "fa5s.folder",
+        "Trash": "fa5s.trash",
+        "File": "fa5s.file",
+        "Copy": "fa5s.copy",
+        "Paste": "fa5s.paste",
+        "Cut": "fa5s.cut",
+        "Save": "fa5s.save",
+        "Print": "fa5s.print",
+    },
+    "Navigation": {
+        "Back": "fa5s.arrow-left",
+        "Forward": "fa5s.arrow-right",
+        "Refresh": "fa5s.sync",
+        "Home": "fa5s.home",
+        "Menu": "fa5s.bars",
+        "Search": "fa5s.search",
+        "Download": "fa5s.download",
+        "Upload": "fa5s.upload",
+    },
+    "Development": {
+        "Code": "fa5s.code",
+        "Terminal": "fa5s.terminal",
+        "GitHub": "fa5b.github",
+        "Bug": "fa5s.bug",
+        "Cogs": "fa5s.cogs",
+        "Database": "fa5s.database",
+    },
+    "Communication": {
+        "Chat": "fa5s.comments",
+        "Mail": "fa5s.envelope",
+        "Bell": "fa5s.bell",
+        "Phone": "fa5s.phone",
+        "User": "fa5s.user",
+        "Users": "fa5s.users",
+    },
+    "Streaming": {
+        "OBS": "fa5s.record-vinyl",
+        "Twitch": "fa5b.twitch",
+        "YouTube": "fa5b.youtube",
+        "Broadcast": "fa5s.broadcast-tower",
+        "Stream": "fa5s.stream",
+    },
+    "Gaming": {
+        "Game": "fa5s.gamepad",
+        "Dice": "fa5s.dice",
+        "Joystick": "fa5s.gamepad",
+        "Target": "fa5s.bullseye",
+    },
+    "UI": {
+        "Minimize": "fa5s.window-minimize",
+        "Maximize": "fa5s.window-maximize",
+        "Close": "fa5s.window-close",
+        "Expand": "fa5s.expand",
+        "Compress": "fa5s.compress",
+    },
+    "Status": {
+        "Lock": "fa5s.lock",
+        "Unlock": "fa5s.unlock",
+        "Heart": "fa5s.heart",
+        "Star": "fa5s.star",
+        "Check": "fa5s.check",
+        "X": "fa5s.times",
+        "Clock": "fa5s.clock",
+        "Calendar": "fa5s.calendar",
+    },
 }
 
 class KeyRecorder(QLineEdit):
@@ -81,6 +147,80 @@ class KeyRecorder(QLineEdit):
         if self.keys_pressed_count == 0:
             self.active_keys = []
 
+
+class IconPickerDialog(QDialog):
+    """Dialog for selecting icons from categorized library."""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Select Icon")
+        self.setMinimumSize(500, 400)
+        self.selected_icon = None
+        self.selected_icon_id = None
+        
+        layout = QVBoxLayout(self)
+        
+        # Category list on the left
+        cat_layout = QHBoxLayout()
+        
+        self.category_list = QListWidget()
+        self.category_list.itemClicked.connect(self.on_category_selected)
+        for category in ICON_LIBRARY.keys():
+            self.category_list.addItem(category)
+        self.category_list.setMaximumWidth(150)
+        cat_layout.addWidget(self.category_list)
+        
+        # Icons grid on the right
+        self.icon_list = QListWidget()
+        self.icon_list.setSpacing(5)
+        self.icon_list.itemDoubleClicked.connect(self.accept)
+        self.icon_list.itemClicked.connect(self.on_icon_selected)
+        cat_layout.addWidget(self.icon_list)
+        
+        layout.addLayout(cat_layout)
+        
+        # Buttons
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+        
+        ok_btn = QPushButton("Select")
+        ok_btn.clicked.connect(self.accept)
+        btn_layout.addWidget(ok_btn)
+        
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.clicked.connect(self.reject)
+        btn_layout.addWidget(cancel_btn)
+        
+        layout.addLayout(btn_layout)
+        
+        # Select first category by default
+        if self.category_list.count() > 0:
+            self.category_list.setCurrentRow(0)
+            self.on_category_selected(self.category_list.item(0))
+    
+    def on_category_selected(self, item):
+        """Populate icon list when category is selected."""
+        category = item.text()
+        self.icon_list.clear()
+        
+        if category in ICON_LIBRARY:
+            for icon_name, icon_id in ICON_LIBRARY[category].items():
+                try:
+                    icon = qta.icon(icon_id, color="#e0e0e0")
+                    list_item = QListWidgetItem(icon, icon_name)
+                    list_item.setData(Qt.UserRole, icon_id)
+                    self.icon_list.addItem(list_item)
+                except:
+                    pass
+        
+        # Set icon size
+        self.icon_list.setIconSize(QSize(32, 32))
+    
+    def on_icon_selected(self, item):
+        """Store selected icon."""
+        self.selected_icon = item.text()
+        self.selected_icon_id = item.data(Qt.UserRole)
+
+
 class ActionEditor(QDialog):
     def __init__(self, key_index, preset_manager):
         super().__init__()
@@ -118,17 +258,12 @@ class ActionEditor(QDialog):
         icon_row.addWidget(self.icon_preview)
 
         self.icon_path = "" # Store the path
+        self.icon_id = None  # Store the icon ID
 
-        # Icon Dropdown (Library)
-        self.icon_combo = QComboBox()
-        self.icon_combo.addItem("Select from Library...", None)
-        
-        for name, icon_id in ICON_LIBRARY.items():
-            icon = qta.icon(icon_id, color="#888")
-            self.icon_combo.addItem(icon, name, icon_id)
-        
-        self.icon_combo.currentIndexChanged.connect(self.on_library_icon_selected)
-        icon_row.addWidget(self.icon_combo)
+        # Icon Library Button
+        library_btn = QPushButton("From Library")
+        library_btn.clicked.connect(self.select_library_icon)
+        icon_row.addWidget(library_btn)
 
         browse_btn = QPushButton("Browse")
         browse_btn.clicked.connect(self.select_icon_file)
@@ -228,25 +363,21 @@ class ActionEditor(QDialog):
         path, _ = QFileDialog.getOpenFileName(self, "Select App", "", "Executable (*.exe)")
         if path: self.app_in.setText(path)
 
-    def on_library_icon_selected(self, index):
-        if index <= 0: return # Placeholder
-        icon_id = self.icon_combo.itemData(index)
-        if icon_id:
-            self.update_icon(icon_id)
+    def select_library_icon(self):
+        """Open categorized icon picker dialog."""
+        dialog = IconPickerDialog(self)
+        if dialog.exec():
+            if dialog.selected_icon_id:
+                self.update_icon(dialog.selected_icon_id)
 
     def select_icon_file(self):
         path, _ = QFileDialog.getOpenFileName(self, "Select Icon", "", "Images (*.png *.svg *.jpg *.ico)")
         if path:
-            self.icon_combo.blockSignals(True)
-            self.icon_combo.setCurrentIndex(0)
-            self.icon_combo.blockSignals(False)
             self.update_icon(path)
 
     def clear_icon(self):
-        self.icon_combo.blockSignals(True)
-        self.icon_combo.setCurrentIndex(0)
-        self.icon_combo.blockSignals(False)
         self.icon_path = ""
+        self.icon_id = None
         self.icon_preview.setPixmap(QPixmap())
         self.icon_preview.setText("No Icon")
 
@@ -284,12 +415,7 @@ class ActionEditor(QDialog):
             icon = curr.get("icon", "")
             if icon:
                 self.update_icon(icon)
-                # Try to map back to Library Dropdown
-                idx = self.icon_combo.findData(icon)
-                if idx > 0:
-                    self.icon_combo.blockSignals(True)
-                    self.icon_combo.setCurrentIndex(idx)
-                    self.icon_combo.blockSignals(False)
+                self.icon_id = icon  # Store the icon ID
             
             # Map saved snake_case to UI Display Names
             mapping = {"none": 0, "open_website": 1, "open_app": 2, "run_command": 3, "key_combo": 4, "type_text": 5}
