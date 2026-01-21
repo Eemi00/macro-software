@@ -60,7 +60,7 @@ class MainWindow(QMainWindow):
 
         # Serial Connection
         if not UI_ONLY:
-            self.serial = SerialManager(port="COM6", callback=self.handle_key_press)
+            self.serial = SerialManager(port="COM3", callback=self.handle_key_press)
             self.serial.connection_status.connect(self.view.update_connection_state)
             self.serial.start()
         else:

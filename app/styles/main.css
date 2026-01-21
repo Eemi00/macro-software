@@ -84,9 +84,9 @@ QScrollBar::handle:vertical {
 
 #dashboardPage {
     background: qlineargradient(
-        x1:0, y1:0, x2:1, y2:1,
-        stop:0 #050505,
-        stop:0.5 #0a0a0a,
+        x1:0.5, y1:1, x2:0.5, y2:0.3,
+        stop:0 #0a2618,
+        stop:0.75 #050505,
         stop:1 #050505
     );
 }

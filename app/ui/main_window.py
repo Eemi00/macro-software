@@ -359,7 +359,11 @@ class RotatingModelWidget(QWidget):
         fillLight.position.set(-6, 3, 8);
         scene.add(fillLight);
 
-        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const backFill = new THREE.DirectionalLight(0xffffff, 1.2);
+        backFill.position.set(6, -3, 8);
+        scene.add(backFill);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 1.0));
         const rim = new THREE.DirectionalLight(0xffffff, 0.8);
         rim.position.set(-6, -2, -8);
         scene.add(rim);
