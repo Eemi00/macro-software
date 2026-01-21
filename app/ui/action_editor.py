@@ -22,6 +22,10 @@ ICON_LIBRARY = {
         "Twitter": "fa5b.twitter",
         "Reddit": "fa5b.reddit",
         "Steam": "fa5b.steam",
+        "Cloudflare": "fa5b.cloudflare",
+    },
+    "AI": {
+        "Open AI": "fa5b.openai",
     },
     "Media": {
         "Play": "fa5s.play",
@@ -63,7 +67,6 @@ ICON_LIBRARY = {
     "Development": {
         "Code": "fa5s.code",
         "Terminal": "fa5s.terminal",
-        "GitHub": "fa5b.github",
         "Bug": "fa5s.bug",
         "Cogs": "fa5s.cogs",
         "Database": "fa5s.database",
@@ -107,6 +110,50 @@ ICON_LIBRARY = {
         "Calendar": "fa5s.calendar",
     },
 }
+
+def get_custom_icons_folder():
+    """Get or create the custom icons folder."""
+    base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    custom_icons_path = os.path.join(base_path, "assets", "custom_icons")
+    os.makedirs(custom_icons_path, exist_ok=True)
+    return custom_icons_path
+
+def load_custom_icons():
+    """Load all custom PNG icons from the custom_icons folder, organized by category prefix.
+    
+    Format: {CATEGORY}_{IconName}.png
+    Example: Brands_Discord.png -> Category "Brands", Display name "Discord"
+    
+    Returns dict organized by category:
+    {
+        "Brands": {"Discord": "/path/to/Brands_Discord.png", ...},
+        "Media": {"Custom": "/path/to/Media_Custom.png", ...}
+    }
+    """
+    custom_icons_by_category = {}
+    custom_folder = get_custom_icons_folder()
+    
+    if os.path.exists(custom_folder):
+        for filename in os.listdir(custom_folder):
+            if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.ico', '.svg', '.webp')):
+                # Parse filename for pattern: {CATEGORY}_{IconName}.extension
+                name_without_ext = os.path.splitext(filename)[0]
+                
+                if '_' in name_without_ext:
+                    parts = name_without_ext.split('_', 1)  # Split only on first underscore
+                    category = parts[0]
+                    icon_display_name = parts[1]
+                    
+                    # Only add if category matches exactly with existing ICON_LIBRARY categories
+                    if category in ICON_LIBRARY:
+                        icon_path = os.path.join(custom_folder, filename)
+                        
+                        if category not in custom_icons_by_category:
+                            custom_icons_by_category[category] = {}
+                        
+                        custom_icons_by_category[category][icon_display_name] = icon_path
+    
+    return custom_icons_by_category
 
 class KeyRecorder(QLineEdit):
     """A textbox that records key combinations in order and resets on release."""
@@ -159,13 +206,19 @@ class IconPickerDialog(QDialog):
         
         layout = QVBoxLayout(self)
         
+        # Load custom icons organized by category
+        self.custom_icons = load_custom_icons()
+        
         # Category list on the left
         cat_layout = QHBoxLayout()
         
         self.category_list = QListWidget()
         self.category_list.itemClicked.connect(self.on_category_selected)
+        
+        # Add all categories from ICON_LIBRARY
         for category in ICON_LIBRARY.keys():
             self.category_list.addItem(category)
+        
         self.category_list.setMaximumWidth(150)
         cat_layout.addWidget(self.category_list)
         
@@ -203,6 +256,7 @@ class IconPickerDialog(QDialog):
         self.icon_list.clear()
         
         if category in ICON_LIBRARY:
+            # Load FontAwesome icons first
             for icon_name, icon_id in ICON_LIBRARY[category].items():
                 try:
                     icon = qta.icon(icon_id, color="#e0e0e0")
@@ -211,6 +265,20 @@ class IconPickerDialog(QDialog):
                     self.icon_list.addItem(list_item)
                 except:
                     pass
+            
+            # Add custom icons from this category if they exist
+            if category in self.custom_icons:
+                for icon_name, icon_path in self.custom_icons[category].items():
+                    try:
+                        pix = QPixmap(icon_path)
+                        if not pix.isNull():
+                            pix = pix.scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                            icon = QIcon(pix)
+                            list_item = QListWidgetItem(icon, icon_name)
+                            list_item.setData(Qt.UserRole, icon_path)  # Store path for custom icons
+                            self.icon_list.addItem(list_item)
+                    except:
+                        pass
         
         # Set icon size
         self.icon_list.setIconSize(QSize(32, 32))
