@@ -11,12 +11,13 @@ except ImportError:
 class ActionExecutor:
     """Handles execution of configured actions."""
     
-    def execute(self, action):
+    def execute(self, action, force=False):
         """
         Executes the given action.
 
         Args:
             action (dict): The action configuration.
+            force (bool): Ignored; kept for backward compatibility with callers.
         """
         if not action:
             return
